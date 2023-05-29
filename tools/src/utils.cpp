@@ -29,6 +29,23 @@ Octree toOctree(const PointCloud::ConstPtr &cloud, double resolution) {
     return octree;
 }
 
+void checkOctree(const Octree::Ptr &octree) {
+    /* Check the voxels in an octree */
+    std::shared_ptr<std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector<LeafContainerT *>);
+    octree->serializeLeafs(*leaf_container_vector_arg);
+    auto cloud = octree->getInputCloud();
+    for (auto leaf: *leaf_container_vector_arg) {
+        PointT centroid;
+        leaf->getCentroid(centroid);
+        std::cout << "centroid = " << centroid << std::endl;
+        pcl::Indices indices;
+        leaf->getPointIndices(indices);
+        std::cout << "indices size = " << indices.size() << std::endl;
+        auto last_idx = leaf->getPointIndex();
+        std::cout << "last index = " << last_idx << " and corresponding point is " << cloud->at(last_idx) << std::endl;
+    }
+}
+
 void visualizePcd(const PointCloud::ConstPtr &cloud) {
     // Create a PCLVisualizer object
     pcl::visualization::PCLVisualizer viewer("pcd viewer");

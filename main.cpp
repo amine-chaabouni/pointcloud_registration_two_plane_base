@@ -46,6 +46,11 @@ int main(int argc, char **argv) {
     std::cout << "Number of removed voxels = " << nb_removed << std::endl;
     std::cout << "Number of voxels = " << octree_ptr->getLeafCount() << std::endl;
     std::cout << "Number of points = " << cloud->size() << std::endl;
+#if VISUALIZE
+    visualizeOctree(cloud, resolution);
+#endif
+
+    auto planes = extractPlane(octree_ptr, cloud);
 
 #if VISUALIZE
     visualizeOctree(cloud, resolution);

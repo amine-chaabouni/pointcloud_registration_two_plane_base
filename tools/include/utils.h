@@ -13,6 +13,8 @@ PointCloudPtr loadPcd(const std::string &pcd_file_path);
 
 Octree toOctree(const PointCloud::ConstPtr &cloud, double resolution);
 
+void checkOctree(const Octree::Ptr &octree);
+
 void visualizePcd(const PointCloud::ConstPtr &cloud);
 
 void visualizeOctree(const PointCloudPtr &cloud, double resolution);

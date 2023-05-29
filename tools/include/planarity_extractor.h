@@ -7,8 +7,14 @@
 
 #include <Eigen/Eigenvalues>
 #include <Eigen/Dense>
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
 #include "types.h"
 #include "utils.h"
+
+Eigen::VectorXf refinePlane(PointCloudPtr &plane);
+
+std::vector<PlaneParam> extractPlane(Octree::Ptr &octree, PointCloud::Ptr &cloud);
 
 double computePlanarityScore(Octree::Ptr &octree, LeafContainerT &leaf, PointT &centroid);
 
