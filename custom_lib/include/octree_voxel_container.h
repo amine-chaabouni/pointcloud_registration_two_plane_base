@@ -1,6 +1,8 @@
 //
 // Created by amine on 26.05.23.
 //
+#pragma once
+
 #include <pcl/octree/octree_pointcloud.h>
 #include <pcl/octree/octree_search.h>
 #include <pcl/types.h>

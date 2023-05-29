@@ -10,22 +10,17 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.cpp")
 file(GLOB HEADER_FILES "${INCLUDE_DIR}/*.h")
 
-add_library(local_tools)
+add_library(pcl_octree_local)
 
-target_sources(local_tools
+target_sources(pcl_octree_local
         PRIVATE
             ${SOURCE_FILES}
         PUBLIC
-            ${HEADER_FILES}
-        )
+            ${HEADER_FILES})
 
-target_link_libraries(local_tools
-        PUBLIC
-            ${PCL_LIBRARIES}
-            pcl_octree_local
-        )
-
-target_include_directories(local_tools
+target_include_directories(pcl_octree_local
         PUBLIC
             ${INCLUDE_DIR}
         )
+
+target_link_libraries(pcl_octree_local ${PCL_LIBRARIES})

@@ -36,11 +36,11 @@
  * */
 
 #include "octree_viewer.h"
-OctreeViewer::OctreeViewer(const pcl::PointCloud<pcl::PointXYZ>::Ptr& input_cloud, double resolution):
+
+OctreeViewer::OctreeViewer(const pcl::PointCloud<pcl::PointXYZ>::Ptr& input_cloud, const Octree::Ptr& input_octree):
         viz("Octree visualizator"),
         displayCloud(new pcl::PointCloud<pcl::PointXYZ>()),
         cloudVoxel(new pcl::PointCloud<pcl::PointXYZ>()),
-        octree(resolution),
         wireframe(true),
         show_cubes_(true),
         show_centroids_(false),
@@ -49,6 +49,7 @@ OctreeViewer::OctreeViewer(const pcl::PointCloud<pcl::PointXYZ>::Ptr& input_clou
 
     //try to load the cloud
     cloud = input_cloud;
+    octree = input_octree;
 
     //register keyboard callbacks
     viz.registerKeyboardCallback(&OctreeViewer::keyboardEventOccurred, *this, nullptr);
@@ -62,15 +63,9 @@ OctreeViewer::OctreeViewer(const pcl::PointCloud<pcl::PointXYZ>::Ptr& input_clou
     viz.addText("n -> Toggle original point cloud representation", 10, 95, 0.0, 1.0, 0.0, "key_n_t");
 
     //set current level to half the maximum one
-    displayedDepth = static_cast<int> (std::floor(octree.getTreeDepth() / 2.0));
+    displayedDepth = static_cast<int> (std::floor(octree->getTreeDepth() / 2.0));
     if (displayedDepth == 0)
         displayedDepth = 1;
-
-    // assign point cloud to octree
-    octree.setInputCloud(cloud);
-
-    // add points from cloud to octree
-    octree.addPointsFromInputCloud();
 
     //show octree at default depth
     extractPointsAtLevel(displayedDepth);
@@ -147,14 +142,14 @@ void OctreeViewer::showLegend() {
     viz.addText(dataDisplay, 0, 45, 1.0, 0.0, 0.0, "disp_original_points");
 
     char level[256];
-    sprintf(level, "Displayed depth is %d on %zu", displayedDepth, static_cast<std::size_t>(octree.getTreeDepth()));
+    sprintf(level, "Displayed depth is %d on %zu", displayedDepth, static_cast<std::size_t>(octree->getTreeDepth()));
     viz.removeShape("level_t1");
     viz.addText(level, 0, 30, 1.0, 0.0, 0.0, "level_t1");
 
     viz.removeShape("level_t2");
     sprintf(level,
             "Voxel size: %.4fm [%zu voxels]",
-            std::sqrt(octree.getVoxelSquaredSideLen(displayedDepth)),
+            std::sqrt(octree->getVoxelSquaredSideLen(displayedDepth)),
             static_cast<std::size_t>(cloudVoxel->size()));
     viz.addText(level, 0, 15, 1.0, 0.0, 0.0, "level_t2");
 }
@@ -170,7 +165,7 @@ void OctreeViewer::update() {
 
     if (show_cubes_) {
         //show octree as cubes
-        showCubes(std::sqrt(octree.getVoxelSquaredSideLen(displayedDepth)));
+        showCubes(std::sqrt(octree->getVoxelSquaredSideLen(displayedDepth)));
     }
 
     if (show_centroids_) {
@@ -270,13 +265,13 @@ void OctreeViewer::extractPointsAtLevel(int depth) {
     std::cout << "===== Extracting data at depth " << depth << "... " << std::flush;
     double start = pcl::getTime();
 
-    for (pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::FixedDepthIterator tree_it = octree.fixed_depth_begin(
+    for (Octree::FixedDepthIterator tree_it = octree->fixed_depth_begin(
             depth);
-         tree_it != octree.fixed_depth_end();
+         tree_it != octree->fixed_depth_end();
          ++tree_it) {
         // Compute the point at the center of the voxel which represents the current OctreeNode
         Eigen::Vector3f voxel_min, voxel_max;
-        octree.getVoxelBounds(tree_it, voxel_min, voxel_max);
+        octree->getVoxelBounds(tree_it, voxel_min, voxel_max);
 
         pt_voxel_center.x = (voxel_min.x() + voxel_max.x()) / 2.0f;
         pt_voxel_center.y = (voxel_min.y() + voxel_max.y()) / 2.0f;
@@ -284,8 +279,8 @@ void OctreeViewer::extractPointsAtLevel(int depth) {
         cloudVoxel->points.push_back(pt_voxel_center);
 
         // If the asked depth is the depth of the octree, retrieve the centroid at this LeafNode
-        if (octree.getTreeDepth() == (unsigned int) depth) {
-            pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::LeafNode *container = static_cast<pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::LeafNode *> (tree_it.getCurrentOctreeNode());
+        if (octree->getTreeDepth() == (unsigned int) depth) {
+            auto container = static_cast<Octree::LeafNode *> (tree_it.getCurrentOctreeNode());
 
             container->getContainer().getCentroid(pt_centroid);
         }
@@ -294,8 +289,8 @@ void OctreeViewer::extractPointsAtLevel(int depth) {
             // Retrieve every centroid under the current BranchNode
             pcl::octree::OctreeKey dummy_key;
             pcl::PointCloud<pcl::PointXYZ>::VectorType voxelCentroids;
-            octree.getVoxelCentroidsRecursive(
-                    static_cast<pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::BranchNode *> (*tree_it),
+            octree->getVoxelCentroidsRecursive(
+                    static_cast<Octree::BranchNode *> (*tree_it),
                     dummy_key, voxelCentroids);
 
             // Iterate over the leafs to compute the centroid of all of them
@@ -322,7 +317,7 @@ void OctreeViewer::extractPointsAtLevel(int depth) {
  *
  */
 bool OctreeViewer::IncrementLevel() {
-    if (displayedDepth < static_cast<int> (octree.getTreeDepth())) {
+    if (displayedDepth < static_cast<int> (octree->getTreeDepth())) {
         displayedDepth++;
         extractPointsAtLevel(displayedDepth);
         return true;

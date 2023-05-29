@@ -7,7 +7,6 @@
 #define VOXEL_BASED_REGISTRATION_UTILS_H
 
 #include "types.h"
-#include "octree_viewer.h"
 
 PointCloudPtr loadPcd(const std::string &pcd_file_path);
 
@@ -17,8 +16,9 @@ void checkOctree(const Octree::Ptr &octree);
 
 void visualizePcd(const PointCloud::ConstPtr &cloud);
 
-void visualizeOctree(const PointCloudPtr &cloud, double resolution);
+void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree);
 
+double angleBetweenVectors(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
 
 #endif //VOXEL_BASED_REGISTRATION_UTILS_H
 

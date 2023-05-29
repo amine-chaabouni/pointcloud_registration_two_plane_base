@@ -18,7 +18,8 @@ double computePlanarityScore(Octree::Ptr &octree, LeafContainerT &leaf, PointT &
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigensolver(matrice_covariance);
     if (eigensolver.info() != Eigen::Success) abort();
     auto eigenvalues = eigensolver.eigenvalues();
-    planarity_score = eigenvalues(1) / (eigenvalues.sum());
+    planarity_score = eigenvalues(2) / (eigenvalues(0) + eigenvalues(1) + eigenvalues(2));
+    std::cout << "planarity score " << planarity_score << std::endl;
     return planarity_score;
 }
 
@@ -65,6 +66,7 @@ int removeVoxelsWithLessThanXPoints(Octree::Ptr &octree, int min_points_per_voxe
 int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score, PointCloud::Ptr &cloud) {
     int deleted_voxels = 0;
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    std::vector<double> planarity_scores;
 
     std::shared_ptr<std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector<LeafContainerT *>);
     octree->serializeLeafs(*leaf_container_vector_arg);
@@ -72,6 +74,7 @@ int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score, PointCloud::Ptr
         PointT centroid;
         leaf->getCentroid(centroid);
         auto score = computePlanarityScore(octree, *leaf, centroid);
+        planarity_scores.push_back(score);
         if (score > max_score) {
             pcl::Indices indices;
             leaf->getPointIndices(indices);
@@ -84,19 +87,25 @@ int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score, PointCloud::Ptr
 #endif
         }
     }
+#if DEBUG
+    std::cout << "planarity scores " << std::endl;
+    for (auto score: planarity_scores) {
+        std::cout << score << std::endl;
+    }
+#endif
 //    removePointsFromCloud(cloud, inliers);
 //    octree = std::make_shared<Octree>(toOctree(cloud, octree->getResolution()));
     return deleted_voxels;
 }
 
-Eigen::VectorXf refinePlane(PointCloudPtr &plane) {
+Eigen::VectorXf refinePlane(PointCloudPtr &plane, double distance_threshold, double probability, int max_iter) {
     pcl::SampleConsensusModelPlane<PointT>::Ptr
             model_p(new pcl::SampleConsensusModelPlane<PointT>(plane));
     pcl::RandomSampleConsensus<PointT> ransac(model_p);
-    ransac.setDistanceThreshold(0.05);
-    ransac.setProbability(0.80);
-    ransac.setMaxIterations(5000);
-    ransac.computeModel();
+    ransac.setDistanceThreshold(distance_threshold);
+    ransac.setProbability(probability);
+    ransac.setMaxIterations(max_iter);
+    ransac.computeModel(1);
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     ransac.getInliers(inliers->indices);
 //    ransac.refineModel(3.0, 1000);
@@ -120,6 +129,7 @@ std::vector<PlaneParam> extractPlane(Octree::Ptr &octree, PointCloud::Ptr &cloud
     octree->serializeLeafs(*leaf_container_vector_arg);
     std::vector<PlaneParam> planes;
     PointCloudPtr new_cloud(new PointCloud);
+    std::cout << "leafs " << leaf_container_vector_arg->size() << std::endl;
 
     for (auto leaf: *leaf_container_vector_arg) {
         pcl::Indices indices;

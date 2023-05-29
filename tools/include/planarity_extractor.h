@@ -9,10 +9,9 @@
 #include <Eigen/Dense>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
-#include "types.h"
-#include "utils.h"
+#include "../../custom_lib/include/types.h"
 
-Eigen::VectorXf refinePlane(PointCloudPtr &plane);
+Eigen::VectorXf refinePlane(PointCloudPtr &plane, double distance_threshold = 0.1, double probability = 0.80, int max_iter = 5000);
 
 std::vector<PlaneParam> extractPlane(Octree::Ptr &octree, PointCloud::Ptr &cloud);
 

@@ -1,6 +1,7 @@
 //
 // Created by amine on 26.05.23.
 //
+#pragma once
 
 #ifndef VOXEL_BASED_REGISTRATION_OCTREE_SEARCH_CENTROID_H
 #define VOXEL_BASED_REGISTRATION_OCTREE_SEARCH_CENTROID_H
@@ -103,10 +104,10 @@ namespace pcl::octree {
          */
         void
         getVoxelCentroidsRecursive(
-                const BranchNode *branch_arg,
-                OctreeKey &key_arg,
+                const BranchNode* branch_arg,
+                OctreeKey& key_arg,
                 typename OctreePointCloud<PointT, LeafContainerT, BranchContainerT>::
-                AlignedPointTVector &voxel_centroid_list_arg) const;
+                AlignedPointTVector& voxel_centroid_list_arg) const;
 
         /** \brief Remove voxels that don't contain a minimum number of points.
         * \param[in] min_points_per_voxel_arg minimum number of points per voxel
@@ -117,4 +118,5 @@ namespace pcl::octree {
     };
 
 }
+typedef pcl::octree::OctreeVoxelBasedRegistration<pcl::PointXYZ, pcl::octree::OctreeVoxelContainer<pcl::PointXYZ>, pcl::octree::OctreeContainerEmpty> OctreeVoxelBasedRegistrationXYZ;
 #endif //VOXEL_BASED_REGISTRATION_OCTREE_SEARCH_CENTROID_H

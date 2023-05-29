@@ -22,11 +22,15 @@
 #include <vtkCubeSource.h>
 #include <vtkCleanPolyData.h>
 
+#include "octree_search_centroid.h"
+#include "octree_voxel_container.h"
+
 using namespace std::chrono_literals;
 
 class OctreeViewer {
 public:
-    OctreeViewer(const pcl::PointCloud<pcl::PointXYZ>::Ptr& input_cloud, double resolution);
+    using Octree = pcl::octree::OctreeVoxelBasedRegistration<pcl::PointXYZ, pcl::octree::OctreeVoxelContainer<pcl::PointXYZ>>;
+    OctreeViewer(const pcl::PointCloud<pcl::PointXYZ>::Ptr& input_cloud, const Octree::Ptr& input_octree);
 
 private:
     //========================================================
@@ -43,7 +47,7 @@ private:
     // cloud which contains the voxel center
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudVoxel;
     //octree
-    pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ> octree;
+    Octree::Ptr octree;
     //level
     int displayedDepth;
     //bool to decide what should be display

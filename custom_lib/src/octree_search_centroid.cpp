@@ -3,7 +3,7 @@
 // from pcl/octree/impl/octree_pointcloud_voxelcentroid.hpp
 //
 
-#include "octree_search_centroid.h"
+#include "../include/octree_search_centroid.h"
 #include <pcl/octree/impl/octree_pointcloud.hpp>
 
 namespace pcl::octree{
@@ -18,7 +18,7 @@ namespace pcl::octree{
         LeafContainerT* leaf = NULL;
 
         // generate key
-        genOctreeKeyforPoint(point_arg, key);
+        this->genOctreeKeyforPoint(point_arg, key);
 
         leaf = this->findLeaf(key);
         if (leaf)
@@ -115,4 +115,7 @@ namespace pcl::octree{
         return deleted_voxels;
     }
 
+    template class OctreeVoxelBasedRegistration<pcl::PointXYZ, OctreeVoxelContainer<pcl::PointXYZ>, OctreeContainerEmpty>;
+
 }
+

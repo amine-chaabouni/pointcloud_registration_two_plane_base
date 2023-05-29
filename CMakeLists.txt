@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 include(CMakePrintHelpers)
-set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 0)
+set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
 
 
 project(voxel_based_registration)
@@ -12,13 +12,6 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL 1.13 REQUIRED)
 find_package(VTK REQUIRED)
-
-# Include dependencies
-include_directories(
-        ${EIGEN3_INCLUDE_DIR}
-        ${OpenCV_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
-)
 
 # Link dependencies
 link_libraries(
@@ -34,6 +27,7 @@ add_definitions(
 set(CMAKE_CXX_FLAGS "-g")
 
 # Add subdirectories
+add_subdirectory(custom_lib)
 add_subdirectory(tools)
 
 # Add include directories
@@ -44,12 +38,26 @@ set(TOOLS_INCLUDE_DIRS ${ROOT}/tools/include)
 file(GLOB
         TOOLS_HEADER_FILES
         "${TOOLS_INCLUDE_DIRS}/*.h"
+        "custom_lib/include/*.h"
         )
 
 set(SOURCE_FILES main.cpp)
 
-# Add executable
-add_executable(main ${SOURCE_FILES} ${TOOLS_HEADER_FILES})
-target_include_directories(main PRIVATE ${TOOLS_INCLUDE_DIRS})
-target_link_libraries(main ${PCL_LIBRARIES} pcl_octree_tools)
+# Include dependencies
+include_directories(
+        ${EIGEN3_INCLUDE_DIR}
+        ${OpenCV_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+        ${TOOLS_INCLUDE_DIRS}
+)
 
+# Add executable
+add_executable(main ${SOURCE_FILES})
+target_link_libraries(main
+        PRIVATE
+            ${PCL_LIBRARIES}
+            pcl_octree_local
+            local_tools
+        )
+
+target_include_directories(main PUBLIC ${CMAKE_CURRENT_LIST_DIR})

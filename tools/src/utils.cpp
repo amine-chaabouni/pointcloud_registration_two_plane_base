@@ -31,7 +31,7 @@ Octree toOctree(const PointCloud::ConstPtr &cloud, double resolution) {
 
 void checkOctree(const Octree::Ptr &octree) {
     /* Check the voxels in an octree */
-    std::shared_ptr<std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector<LeafContainerT *>);
+    std::shared_ptr <std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector < LeafContainerT * > );
     octree->serializeLeafs(*leaf_container_vector_arg);
     auto cloud = octree->getInputCloud();
     for (auto leaf: *leaf_container_vector_arg) {
@@ -66,7 +66,10 @@ void visualizePcd(const PointCloud::ConstPtr &cloud) {
 #endif
 }
 
-void visualizeOctree(const PointCloudPtr &cloud, double resolution) {
-    OctreeViewer viewer{cloud, resolution};
+void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree) {
+    OctreeViz viewer{cloud, octree};
 }
 
+double angleBetweenVectors(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
+    return acos(v1.dot(v2) / (v1.norm() * v2.norm()));
+}
