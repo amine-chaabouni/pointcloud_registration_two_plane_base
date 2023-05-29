@@ -10,7 +10,7 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.hpp" "${SOURCE_DIR}/*.cpp")
 file(GLOB HEADER_FILES "${INCLUDE_DIR}/*.h")
 
-add_library(pcl_octree_tools ${SOURCE_FILES} ${HEADER_FILES})
+add_library(pcl_octree_tools ${SOURCE_FILES} ${HEADER_FILES} src/planarity_extractor.cpp include/planarity_extractor.h include/types.h src/utils.cpp include/utils.h)
 
 target_include_directories(pcl_octree_tools
         PUBLIC
