@@ -37,7 +37,7 @@ void removePointsFromCloud(PointCloud::Ptr &cloud, pcl::PointIndices::Ptr &inlie
 }
 
 
-int removeVoxelsWithLessThanXPoints(Octree::Ptr &octree, int min_points_per_voxel_arg, PointCloud::Ptr &cloud) {
+int removeVoxelsWithLessThanXPoints(Octree::Ptr &octree, int min_points_per_voxel_arg) {
     int deleted_voxels = 0;
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
 
@@ -63,7 +63,7 @@ int removeVoxelsWithLessThanXPoints(Octree::Ptr &octree, int min_points_per_voxe
     return deleted_voxels;
 }
 
-int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score, PointCloud::Ptr &cloud) {
+int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score) {
     int deleted_voxels = 0;
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
     std::vector<double> planarity_scores;
@@ -93,12 +93,10 @@ int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score, PointCloud::Ptr
         std::cout << score << std::endl;
     }
 #endif
-//    removePointsFromCloud(cloud, inliers);
-//    octree = std::make_shared<Octree>(toOctree(cloud, octree->getResolution()));
     return deleted_voxels;
 }
 
-Eigen::VectorXf refinePlane(PointCloudPtr &plane, double distance_threshold, double probability, int max_iter) {
+std::pair<Eigen::VectorXf, pcl::Indices> refinePlane(PointCloudPtr &plane, double distance_threshold, double probability, int max_iter) {
     pcl::SampleConsensusModelPlane<PointT>::Ptr
             model_p(new pcl::SampleConsensusModelPlane<PointT>(plane));
     pcl::RandomSampleConsensus<PointT> ransac(model_p);
@@ -120,28 +118,33 @@ Eigen::VectorXf refinePlane(PointCloudPtr &plane, double distance_threshold, dou
 #if DEBUG
     std::cout << "coefficients " << coefficients << std::endl;
 #endif
-    return coefficients;
+    return std::make_pair(coefficients, inliers->indices);
 }
 
 
-std::vector<PlaneParam> extractPlane(Octree::Ptr &octree, PointCloud::Ptr &cloud) {
+std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>  extractPlane(Octree::Ptr &octree) {
     std::shared_ptr<std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector<LeafContainerT *>);
     octree->serializeLeafs(*leaf_container_vector_arg);
-    std::vector<PlaneParam> planes;
-    PointCloudPtr new_cloud(new PointCloud);
+    std::vector<PlaneParam> params;
+    std::vector<pcl::Indices> indice_vec;
+//    PointCloudPtr new_cloud(new PointCloud);
     std::cout << "leafs " << leaf_container_vector_arg->size() << std::endl;
 
     for (auto leaf: *leaf_container_vector_arg) {
         pcl::Indices indices;
         leaf->getPointIndices(indices);
         PointCloudPtr plane(new PointCloud);
+        auto cloud = octree->getInputCloud();
         pcl::copyPointCloud(*cloud, indices, *plane);
         if(plane->size() < 3){
             std::cout << indices.size() << std::endl;
             continue;
         }
 
-        auto coefficients = refinePlane(plane);
+        auto refined_plane = refinePlane(plane);
+        auto coefficients = refined_plane.first;
+        // indices should be updated after refinement
+//         indices = refined_plane.second;
         if(coefficients.size() == 0) continue;
         Eigen::Vector3f normal(coefficients(0), coefficients(1), coefficients(2));
         double distance = coefficients(3);
@@ -151,11 +154,10 @@ std::vector<PlaneParam> extractPlane(Octree::Ptr &octree, PointCloud::Ptr &cloud
             distance = -distance;
         }
 
-        planes.emplace_back(normal, distance);
+        params.emplace_back(normal, distance);
+        indice_vec.push_back(indices);
 
-        new_cloud->insert(new_cloud->end(), plane->begin(), plane->end());
+//        new_cloud->insert(new_cloud->end(), plane->begin(), plane->end());
     }
-    cloud = new_cloud;
-//    octree = std::make_shared<Octree>(toOctree(cloud, octree->getResolution()));
-    return planes;
+    return std::make_pair(params, indice_vec);
 }

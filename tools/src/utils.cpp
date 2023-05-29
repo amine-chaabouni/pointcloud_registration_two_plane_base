@@ -66,6 +66,37 @@ void visualizePcd(const PointCloud::ConstPtr &cloud) {
 #endif
 }
 
+void visualizePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::Indices> &planes){
+    // Create a PCLVisualizer object
+    pcl::visualization::PCLVisualizer viewer("pcd viewer");
+    // Add the point cloud to the viewer
+    viewer.addPointCloud<pcl::PointXYZ>(cloud, "point cloud");
+    // Set the background of the viewer to black
+    viewer.setBackgroundColor(0, 0, 0);
+
+    int i = 0;
+    auto rate = 255 / planes.size();
+    for(auto indices: planes){
+        ++i;
+        PointCloudPtr plane_cloud(new PointCloud);
+        for(auto idx: indices){
+            plane_cloud->push_back(cloud->at(idx));
+        }
+        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(plane_cloud, 255-(i*rate), 0, i*rate);
+        auto name = "plane " + std::to_string(i);
+        viewer.addPointCloud<pcl::PointXYZ>(plane_cloud, red_color, name);
+
+
+    }
+
+    // Set the size of the point
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "point cloud");
+    // Display the point cloud
+    viewer.spin();
+    while (!viewer.wasStopped()) {
+    }
+}
+
 void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree) {
     OctreeViz viewer{cloud, octree};
 }

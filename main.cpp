@@ -41,10 +41,10 @@ int main(int argc, char **argv) {
     std::cout << "Number of voxels = " << octree_ptr->getLeafCount() << std::endl;
 
     // Remove low populated voxels
-    auto nb_removed = removeVoxelsWithLessThanXPoints(octree_ptr, 10, cloud);
+    auto nb_removed = removeVoxelsWithLessThanXPoints(octree_ptr, 10);
     std::cout << "Number of removed voxels = " << nb_removed << std::endl;
 
-    nb_removed = removeNonPlanarVoxels(octree_ptr, planarity_score, cloud);
+    nb_removed = removeNonPlanarVoxels(octree_ptr, planarity_score);
     std::cout << "Number of removed voxels = " << nb_removed << std::endl;
     std::cout << "Number of voxels = " << octree_ptr->getLeafCount() << std::endl;
     std::cout << "Number of points = " << cloud->size() << std::endl;
@@ -52,19 +52,20 @@ int main(int argc, char **argv) {
     visualizeOctree(cloud, octree_ptr);
 #endif
 
-    auto planes = extractPlane(octree_ptr, cloud);
-    std::cout << "Number of planes = " << planes.size() << std::endl;
+    auto planes = extractPlane(octree_ptr);
+    auto plane_params = planes.first;
+    std::cout << "Number of planes = " << plane_params.size() << std::endl;
 
 #if VISUALIZE
-    visualizeOctree(cloud, octree_ptr);
+    visualizePlanesOnCloud(cloud, planes.second);
 #endif
 
     std::vector <std::pair<int, int>> bases;
-    auto nb_planes = planes.size();
+    auto nb_planes = plane_params.size();
     for (int i = 0; i < nb_planes; i++) {
         for (int j = i + 1; j < nb_planes; j++) {
-            auto plane1 = planes[i];
-            auto plane2 = planes[j];
+            auto plane1 = plane_params[i];
+            auto plane2 = plane_params[j];
             auto angle = angleBetweenVectors(plane1.first, plane2.first);
             if (angle < min_angle || angle > max_angle) {
                 continue;

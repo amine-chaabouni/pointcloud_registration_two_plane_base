@@ -16,6 +16,8 @@ void checkOctree(const Octree::Ptr &octree);
 
 void visualizePcd(const PointCloud::ConstPtr &cloud);
 
+void visualizePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::Indices> &planes);
+
 void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree);
 
 double angleBetweenVectors(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
