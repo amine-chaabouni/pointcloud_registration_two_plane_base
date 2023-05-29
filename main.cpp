@@ -24,9 +24,17 @@ preparePointCloud(const std::string &cloud_path, double resolution, double plana
     Octree octree = toOctree(cloud, resolution);
     auto octree_ptr = std::make_shared<Octree>(octree);
 
+#if VISUALIZE
+    visualizeOctree(cloud, octree_ptr);
+#endif
+
     // Remove not needed voxels
     auto nb_removed = removeVoxelsWithLessThanXPoints(octree_ptr, 10);
     nb_removed = removeNonPlanarVoxels(octree_ptr, planarity_score);
+
+#if VISUALIZE
+    visualizeOctree(cloud, octree_ptr);
+#endif
 
     // Generate planes
     auto planes = extractPlane(octree_ptr);
@@ -48,12 +56,6 @@ preparePointCloud(const std::string &cloud_path, double resolution, double plana
         }
     }
 
-    return std::make_tuple(octree_ptr, planes, bases);
-
-#if VISUALIZE
-    visualizeOctree(cloud, octree_ptr);
-#endif
-
 #if VISUALIZE
     visualizePlanesOnCloud(cloud, planes.second);
 #endif
@@ -61,6 +63,8 @@ preparePointCloud(const std::string &cloud_path, double resolution, double plana
 #if DEBUG
     checkOctree(octree_ptr);
 #endif
+
+    return std::make_tuple(octree_ptr, planes, bases);
 }
 
 int main(int argc, char **argv) {
@@ -74,9 +78,14 @@ int main(int argc, char **argv) {
     double planarity_score = std::atof(argv[3]);
 
     auto first_cloud = preparePointCloud(cloud_path, resolution, planarity_score);
-    auto octree_ptr = std::get<0>(first_cloud);
-    auto planes = std::get<1>(first_cloud);
-    auto bases = std::get<2>(first_cloud);
+    auto first_octree_ptr = std::get<0>(first_cloud);
+    auto first_planes = std::get<1>(first_cloud);
+    auto first_bases = std::get<2>(first_cloud);
+
+    auto second_cloud = preparePointCloud(cloud_path, resolution, planarity_score);
+    auto second_octree_ptr = std::get<0>(second_cloud);
+    auto second_planes = std::get<1>(second_cloud);
+    auto second_bases = std::get<2>(second_cloud);
 
 
     return 0;
