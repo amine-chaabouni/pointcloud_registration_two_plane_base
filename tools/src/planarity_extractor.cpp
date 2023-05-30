@@ -19,7 +19,9 @@ double computePlanarityScore(Octree::Ptr &octree, LeafContainerT &leaf, PointT &
     if (eigensolver.info() != Eigen::Success) abort();
     auto eigenvalues = eigensolver.eigenvalues();
     planarity_score = eigenvalues(2) / (eigenvalues(0) + eigenvalues(1) + eigenvalues(2));
+#if DEBUG
     std::cout << "planarity score " << planarity_score << std::endl;
+#endif
     return planarity_score;
 }
 

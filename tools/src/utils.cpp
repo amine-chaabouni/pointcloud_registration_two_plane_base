@@ -31,7 +31,7 @@ Octree toOctree(const PointCloud::ConstPtr &cloud, double resolution) {
 
 void checkOctree(const Octree::Ptr &octree) {
     /* Check the voxels in an octree */
-    std::shared_ptr <std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector < LeafContainerT * > );
+    std::shared_ptr<std::vector<LeafContainerT * >> leaf_container_vector_arg(new std::vector<LeafContainerT *>);
     octree->serializeLeafs(*leaf_container_vector_arg);
     auto cloud = octree->getInputCloud();
     for (auto leaf: *leaf_container_vector_arg) {
@@ -46,61 +46,19 @@ void checkOctree(const Octree::Ptr &octree) {
     }
 }
 
-void visualizePcd(const PointCloud::ConstPtr &cloud) {
-    // Create a PCLVisualizer object
-    pcl::visualization::PCLVisualizer viewer("pcd viewer");
-    // Add the point cloud to the viewer
-    viewer.addPointCloud<pcl::PointXYZ>(cloud, "point cloud");
-    // Set the background of the viewer to black
-    viewer.setBackgroundColor(0, 0, 0);
-    // Set the size of the point
-    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "point cloud");
-    // Display the point cloud
-#if VISUALIZE
-    std::cout << "Spinning viewer in load_pcd" << std::endl;
-    viewer.spin();
-    while (!viewer.wasStopped()) {
-        std::cout << "Viewer spun" << std::endl;
-    }
-    std::cout << "Viewer Stopped" << std::endl;
-#endif
-}
-
-void visualizePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::Indices> &planes){
-    // Create a PCLVisualizer object
-    pcl::visualization::PCLVisualizer viewer("pcd viewer");
-    // Add the point cloud to the viewer
-    viewer.addPointCloud<pcl::PointXYZ>(cloud, "point cloud");
-    // Set the background of the viewer to black
-    viewer.setBackgroundColor(0, 0, 0);
-
-    int i = 0;
-    auto rate = 255 / planes.size();
-    for(auto indices: planes){
-        ++i;
-        PointCloudPtr plane_cloud(new PointCloud);
-        for(auto idx: indices){
-            plane_cloud->push_back(cloud->at(idx));
-        }
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(plane_cloud, 255-(i*rate), 0, i*rate);
-        auto name = "plane " + std::to_string(i);
-        viewer.addPointCloud<pcl::PointXYZ>(plane_cloud, red_color, name);
-
-
-    }
-
-    // Set the size of the point
-    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "point cloud");
-    // Display the point cloud
-    viewer.spin();
-    while (!viewer.wasStopped()) {
-    }
-}
-
-void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree) {
-    OctreeViz viewer{cloud, octree};
-}
-
 double angleBetweenVectors(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
     return acos(v1.dot(v2) / (v1.norm() * v2.norm()));
+}
+
+void findRotationBetweenPlanes(const Eigen::MatrixXf &source_normals,
+                               const Eigen::MatrixXf &target_normals,
+                               std::shared_ptr<Eigen::Matrix3f> &R) {
+    // calculate SVD of normals
+    Eigen::MatrixXf normals_matrix = source_normals * target_normals.transpose();
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(normals_matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+    // calculate rotation matrix
+    std::cout << "U = " << svd.matrixU() << std::endl;
+    *R = svd.matrixV() * svd.matrixU().transpose();
+    std::cout << "R = " << *R << std::endl;
 }

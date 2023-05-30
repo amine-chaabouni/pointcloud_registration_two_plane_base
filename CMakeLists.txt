@@ -29,6 +29,7 @@ set(CMAKE_CXX_FLAGS "-g")
 # Add subdirectories
 add_subdirectory(custom_lib)
 add_subdirectory(tools)
+add_subdirectory(third_lib)
 
 # Add include directories
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
