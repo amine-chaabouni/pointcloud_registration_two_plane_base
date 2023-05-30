@@ -8,6 +8,7 @@
 #include "visualization.h"
 #include "base_processor.h"
 
+#define CLION_DEBUG 1
 
 double min_angle = 10.0 * M_PI / 180.0;
 double max_angle = 80.0 * M_PI / 180.0;
@@ -56,7 +57,6 @@ preparePointCloud(const std::string &cloud_path, double resolution, double plana
 }
 
 
-
 PointCloudPtr
 transformPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation) {
     PointCloudPtr transformed_cloud(new PointCloud);
@@ -66,7 +66,7 @@ transformPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &tr
     for (auto point: cloud->points) {
         Eigen::Vector4f point_4d;
         point_4d << point.x, point.y, point.z, 1;
-        auto transformed_point = transformation * point_4d;
+        auto transformed_point = point_4d.transpose() * transformation;
         transformed_cloud->points.emplace_back(
                 pcl::PointXYZ(transformed_point(0), transformed_point(1), transformed_point(2))
         );
@@ -75,6 +75,12 @@ transformPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &tr
 }
 
 int main(int argc, char **argv) {
+
+#if CLION_DEBUG
+    std::string cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
+    double resolution = 0.5;
+    double planarity_score = 0.6;
+#else
     if (argc != 4) {
         std::cerr << "ERROR: Syntax is octreeVisu <pcd file> <resolution>" << std::endl;
         std::cerr << "EXAMPLE: ./main file_path voxel_size planarity_score" << std::endl;
@@ -83,6 +89,7 @@ int main(int argc, char **argv) {
     std::string cloud_path(argv[1]);
     double resolution = std::atof(argv[2]);
     double planarity_score = std::atof(argv[3]);
+#endif
 
     cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
     auto first_cloud = preparePointCloud(cloud_path, resolution, planarity_score);
@@ -100,20 +107,22 @@ int main(int argc, char **argv) {
     std::cout << "Second cloud has " << second_planes.first.size() << " planes" << std::endl;
     std::cout << "Second cloud has " << second_bases.size() << " bases" << std::endl;
 
+    VisualizeTwoPointClouds(first_octree_ptr->getInputCloud(), second_octree_ptr->getInputCloud());
+
     auto optimal_correspondence = findOptimalCorrespondences(first_cloud, second_cloud);
     for (auto corr: optimal_correspondence)
         std::cout << "optimal_correspondence: " << corr.first << " and " << corr.second << std::endl;
 
     // Visualize Correspondances
-    visualizeCorrespondences(first_cloud, second_cloud, optimal_correspondence);
+//    visualizeCorrespondences(first_cloud, second_cloud, optimal_correspondence);
 
     // Compute the transformation
     std::shared_ptr<Eigen::MatrixXf> transformation(new Eigen::MatrixXf);
-    estimateRigidTransformation(first_planes.first, second_planes.first, optimal_correspondence, transformation);
-    std::cout << "Transformation: " << std::endl << transformation << std::endl;
+    estimateRigidTransformation(first_planes.first, second_planes.first, optimal_correspondence, transformation, false);
+    std::cout << "Transformation: " << std::endl << *transformation << std::endl;
 
-    PointCloudPtr transformed_cloud = transformPointCloud(first_octree_ptr->getInputCloud(), *transformation);
-    VisualizeTwoPointClouds(transformed_cloud, second_octree_ptr->getInputCloud());
+    PointCloudPtr transformed_cloud = transformPointCloud(second_octree_ptr->getInputCloud(), *transformation);
+    VisualizeTwoPointClouds(first_octree_ptr->getInputCloud(), transformed_cloud);
 
     return 0;
 }

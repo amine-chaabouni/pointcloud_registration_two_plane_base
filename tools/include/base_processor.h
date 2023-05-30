@@ -41,6 +41,7 @@ void
 estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
                             const std::vector<PlaneParam> &target_planes,
                             const Correspondences &correspondences,
-                            std::shared_ptr<Eigen::MatrixXf> &transformation);
+                            std::shared_ptr<Eigen::MatrixXf> &transformation,
+                            bool with_translation);
 
 #endif //VOXEL_BASED_REGISTRATION_BASE_PROCESSOR_H

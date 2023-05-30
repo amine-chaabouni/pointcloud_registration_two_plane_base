@@ -22,6 +22,8 @@ void visualizePcd(const PointCloud::ConstPtr &cloud) {
         std::cout << "Viewer spun" << std::endl;
     }
     std::cout << "Viewer Stopped" << std::endl;
+    viewer.close();
+
 #endif
 }
 
@@ -53,13 +55,11 @@ void visualizePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector
     viewer.spin();
     while (!viewer.wasStopped()) {
     }
+    viewer.close();
 }
 
 void visualizeCorrespondences(const CompleteCloud& first_cloud, const CompleteCloud& second_cloud,
                               const std::vector<std::pair<int, int>>& optimal_correspondence) {
-    pcl::visualization::PCLVisualizer viewer("PCL Viewer");
-    viewer.setBackgroundColor(0, 0, 0);
-
     std::vector<pcl::Indices> indices;
     auto first_cloud_indices = std::get<1>(first_cloud).second;
     for (auto corr: optimal_correspondence)
@@ -81,6 +81,7 @@ void VisualizeTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const Poin
     // Visualize the result
     pcl::visualization::PCLVisualizer viewer("PCL Viewer");
     viewer.setBackgroundColor(0.0, 0.0, 0.0);
+
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(first_cloud, 255, 0, 0);
     viewer.addPointCloud<pcl::PointXYZ>(first_cloud, red_color, "source_cloud");
 
@@ -94,4 +95,5 @@ void VisualizeTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const Poin
     viewer.spin();
     while (!viewer.wasStopped()) {
     }
+    viewer.close();
 }

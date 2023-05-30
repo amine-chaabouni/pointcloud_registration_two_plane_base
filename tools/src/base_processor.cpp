@@ -61,7 +61,9 @@ estimateTranslationParameters(const std::vector<PlaneParam> &source_planes,
     std::cout << "Source d: " << std::endl << source_d << std::endl;
     std::cout << "Distance: " << std::endl << distance << std::endl;
 #endif
-    *translation = (target_normals * target_normals.transpose()).inverse() * target_normals * distance;
+//    *translation =  (target_normals * target_normals.transpose()).inverse() * target_normals * distance;
+//    *translation = target_normals.transpose().colPivHouseholderQr().solve(distance);
+    *translation = target_normals.transpose().bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(distance);
 }
 
 std::pair<std::vector<std::pair<int, double>>, std::vector<std::pair<int, double>>>
@@ -142,7 +144,7 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
 
     if (plane_correspondence.size() >= 2) {
         //Estimate initial transformation parameters
-        estimateRigidTransformation(source_planes, target_planes, plane_correspondence, transformation);
+        estimateRigidTransformation(source_planes, target_planes, plane_correspondence, transformation, false);
     } else {
         return std::make_pair(-1, std::vector<std::pair<int, int>>());
     }
@@ -152,7 +154,7 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
     for (const auto &source_plane: source_planes) {
         Eigen::Vector4f normal;
         normal << source_plane.first, source_plane.second;
-        auto transformed_normal = normal.transpose() * (*transformation);
+        auto transformed_normal = (*transformation) * normal;
         transformed_source_planes.emplace_back(
                 Eigen::Vector3f(transformed_normal(0), transformed_normal(1), transformed_normal(2)),
                 transformed_normal(3)
@@ -236,7 +238,6 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
 
                     auto LCP_i = base_correspondences.first;
                     auto plane_correspondence_i = base_correspondences.second;
-                    std::cout << "LCP_i: " << LCP_i << std::endl;
                     if (LCP_i > LCP) {
                         LCP = LCP_i;
                         plane_correspondence = plane_correspondence_i;
@@ -257,7 +258,8 @@ void
 estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
                             const std::vector<PlaneParam> &target_planes,
                             const Correspondences &correspondences,
-                            std::shared_ptr<Eigen::MatrixXf> &transformation) {
+                            std::shared_ptr<Eigen::MatrixXf> &transformation,
+                            bool with_translation) {
     // Compute optimal transformation
     Eigen::MatrixXf source_normals(3, correspondences.size());
     Eigen::MatrixXf target_normals(3, correspondences.size());
@@ -275,6 +277,10 @@ estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
     // Compute the transformation matrix
     transformation->resize(rotation->rows() + 1, rotation->cols() + translation->cols()); //4x4
     transformation->block<3, 3>(0, 0) = *rotation;
-    transformation->block(0, 3, 3, 1) = *translation;
+    if (with_translation) {
+        transformation->block(0, 3, 3, 1) = *translation;
+    } else {
+        transformation->block(0, 3, 3, 1) = Eigen::Vector3f(0, 0, 0);
+    }
     transformation->block(3, 0, 1, 4) = Eigen::Vector4f(0, 0, 0, 1).transpose();
 }

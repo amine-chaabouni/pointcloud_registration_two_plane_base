@@ -58,7 +58,5 @@ void findRotationBetweenPlanes(const Eigen::MatrixXf &source_normals,
     Eigen::JacobiSVD<Eigen::MatrixXf> svd(normals_matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
     // calculate rotation matrix
-    std::cout << "U = " << svd.matrixU() << std::endl;
     *R = svd.matrixV() * svd.matrixU().transpose();
-    std::cout << "R = " << *R << std::endl;
 }
