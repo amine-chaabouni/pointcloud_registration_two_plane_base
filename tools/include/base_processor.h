@@ -9,6 +9,10 @@
 #include "utils.h"
 #include "visualization.h"
 
+bool
+correspondencesValid(const std::vector<PlaneParam> &source_planes, const std::vector<PlaneParam> &target_planes,
+                     const Correspondences &final_correspondence);
+
 void
 generateBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases *bases, double min_angle,
                               double max_angle);

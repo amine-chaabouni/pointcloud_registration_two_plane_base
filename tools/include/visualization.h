@@ -7,6 +7,9 @@
 
 #include "tool_types.h"
 
+void addNormals(const PointT &point_on_first_plane, Eigen::Vector3d &normal_on_first_plane,
+                pcl::visualization::PCLVisualizer &viewer, const std::string &name);
+
 void preparePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::Indices> &planes,
                           pcl::visualization::PCLVisualizer &viewer, const std::string &name);
 
@@ -23,7 +26,7 @@ void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree);
 
 void visualizeTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const PointCloud::ConstPtr &second_cloud);
 
-void visualizeBases(const PointCloud::ConstPtr &first_cloud, const std::vector<pcl::Indices> &first_planes,
-                    const PointCloud::ConstPtr &second_cloud, const std::vector<pcl::Indices> &second_planes);
+void visualizeBases(const PointCloud::ConstPtr &first_cloud, const Planes &first_planes,
+                    const PointCloud::ConstPtr &second_cloud, const Planes &second_planes);
 
 #endif //VOXEL_BASED_REGISTRATION_VISUALIZATION_H

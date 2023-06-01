@@ -27,6 +27,14 @@ void visualizePcd(const PointCloud::ConstPtr &cloud) {
 #endif
 }
 
+
+void addNormals(const PointT& point_on_plane, Eigen::Vector3f& normal, pcl::visualization::PCLVisualizer& viewer, const std::string& name){
+    PointT tip_of_arrow;
+    tip_of_arrow.x = point_on_plane.x + normal(0);
+    tip_of_arrow.y = point_on_plane.y + normal(1);
+    tip_of_arrow.z = point_on_plane.z + normal(2);
+    viewer.addArrow<PointT, PointT>(tip_of_arrow, point_on_plane, 1, 0, 0, false, name);
+}
 void preparePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::Indices> &planes, pcl::visualization::PCLVisualizer &viewer, const std::string& name) {
     // Add the point cloud to the viewer
     viewer.addPointCloud<pcl::PointXYZ>(cloud, name);
@@ -41,7 +49,7 @@ void preparePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<p
         for (auto idx: indices) {
             plane_cloud->push_back(cloud->at(idx));
         }
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(plane_cloud, 255 - (i * rate), 0,
+        pcl::visualization::PointCloudColorHandlerCustom<PointT> red_color(plane_cloud, 255 - (i * rate), 0,
                                                                                   i * rate);
         auto plane_name = name + " plane " + std::to_string(i);
         viewer.addPointCloud<pcl::PointXYZ>(plane_cloud, red_color, plane_name);
@@ -68,17 +76,26 @@ void prepareTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const PointC
 
 void visualizeCorrespondences(const CompleteCloud& first_cloud, const CompleteCloud& second_cloud,
                               const std::vector<std::pair<int, int>>& optimal_correspondence) {
+    // Create a PCLVisualizer object
+    pcl::visualization::PCLVisualizer viewer("pcd viewer");
+
     std::vector<pcl::Indices> indices;
     auto first_cloud_indices = std::get<1>(first_cloud).second;
     for (auto corr: optimal_correspondence)
         indices.emplace_back(first_cloud_indices[corr.first]);
-    visualizePlanesOnCloud(std::get<0>(first_cloud)->getInputCloud(), indices);
+    preparePlanesOnCloud(std::get<0>(first_cloud)->getInputCloud(), indices, viewer, "first_cloud");
 
     indices.clear();
     auto second_cloud_indices = std::get<1>(second_cloud).second;
     for (auto corr: optimal_correspondence)
         indices.emplace_back(second_cloud_indices[corr.second]);
-    visualizePlanesOnCloud(std::get<0>(second_cloud)->getInputCloud(), indices);
+    preparePlanesOnCloud(std::get<0>(second_cloud)->getInputCloud(), indices, viewer, "second_cloud");
+
+    // Display the point cloud
+    viewer.spin();
+    while (!viewer.wasStopped()) {
+    }
+    viewer.close();
 }
 
 void visualizeOctree(const PointCloudPtr &cloud, const Octree::Ptr &octree) {
@@ -97,13 +114,34 @@ void visualizeTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const Poin
     viewer.close();
 }
 
-void visualizeBases(const PointCloud::ConstPtr &first_cloud, const std::vector<pcl::Indices> &first_planes,
-                    const PointCloud::ConstPtr &second_cloud, const std::vector<pcl::Indices> &second_planes){
+void visualizeBases(const PointCloud::ConstPtr &first_cloud, const Planes &first_planes,
+                    const PointCloud::ConstPtr &second_cloud, const Planes &second_planes){
     // Create a PCLVisualizer object
     pcl::visualization::PCLVisualizer viewer("pcd viewer");
+
+    auto first_indices = first_planes.second;
+    auto second_indices = second_planes.second;
     // Add the point cloud to the viewer
-    preparePlanesOnCloud(first_cloud, first_planes, viewer, "first_cloud");
-    preparePlanesOnCloud(second_cloud, second_planes, viewer, "second_cloud");
+    preparePlanesOnCloud(first_cloud, first_indices, viewer, "first_cloud");
+    preparePlanesOnCloud(second_cloud, second_indices, viewer, "second_cloud");
+
+    // Display normals
+    auto point_on_plane = first_cloud->at(first_indices[0][0]);
+    auto normal = first_planes.first[0].first;
+    addNormals(point_on_plane, normal, viewer, "first_normal_first_cloud");
+
+    point_on_plane = first_cloud->at(first_indices[1][0]);
+    normal = first_planes.first[1].first;
+    addNormals(point_on_plane, normal, viewer, "second_normal_first_cloud");
+
+    point_on_plane = second_cloud->at(second_indices[0][0]);
+    normal = second_planes.first[0].first;
+    addNormals(point_on_plane, normal, viewer, "first_normal_second_cloud");
+
+    point_on_plane = second_cloud->at(second_indices[1][0]);
+    normal = second_planes.first[1].first;
+    addNormals(point_on_plane, normal, viewer, "second_normal_second_cloud");
+
     // Display the point cloud
     viewer.spin();
     while (!viewer.wasStopped()) {
