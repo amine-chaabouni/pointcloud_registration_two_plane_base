@@ -11,7 +11,7 @@
 #define CLION_DEBUG 1
 
 double min_angle = 10.0 * M_PI / 180.0;
-double max_angle = 80.0 * M_PI / 180.0;
+double max_angle = 110.0 * M_PI / 180.0;
 
 using Planes = std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>;
 using Bases = std::vector<std::tuple<int, int, double>>;
@@ -39,10 +39,11 @@ preparePointCloud(const std::string &cloud_path, double resolution, double plana
     // Generate planes
     auto planes = extractPlane(octree_ptr);
     auto plane_params = planes.first;
+    visualizePlanesOnCloud(cloud, planes.second);
 
     // Generate bases
     Bases bases;
-    generetaeBasesFromPlaneParams(plane_params, &bases, min_angle, max_angle);
+    generateBasesFromPlaneParams(plane_params, &bases, min_angle, max_angle);
 
 
 #if VISUALIZE
@@ -56,23 +57,6 @@ preparePointCloud(const std::string &cloud_path, double resolution, double plana
     return std::make_tuple(octree_ptr, planes, bases);
 }
 
-
-PointCloudPtr
-transformPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation) {
-    PointCloudPtr transformed_cloud(new PointCloud);
-    transformed_cloud = cloud->makeShared();
-    transformed_cloud->points.clear();
-
-    for (auto point: cloud->points) {
-        Eigen::Vector4f point_4d;
-        point_4d << point.x, point.y, point.z, 1;
-        auto transformed_point = point_4d.transpose() * transformation;
-        transformed_cloud->points.emplace_back(
-                pcl::PointXYZ(transformed_point(0), transformed_point(1), transformed_point(2))
-        );
-    }
-    return transformed_cloud;
-}
 
 int main(int argc, char **argv) {
 
@@ -107,7 +91,7 @@ int main(int argc, char **argv) {
     std::cout << "Second cloud has " << second_planes.first.size() << " planes" << std::endl;
     std::cout << "Second cloud has " << second_bases.size() << " bases" << std::endl;
 
-    VisualizeTwoPointClouds(first_octree_ptr->getInputCloud(), second_octree_ptr->getInputCloud());
+    visualizeTwoPointClouds(first_octree_ptr->getInputCloud(), second_octree_ptr->getInputCloud());
 
     auto optimal_correspondence = findOptimalCorrespondences(first_cloud, second_cloud);
     for (auto corr: optimal_correspondence)
@@ -121,8 +105,8 @@ int main(int argc, char **argv) {
     estimateRigidTransformation(first_planes.first, second_planes.first, optimal_correspondence, transformation, false);
     std::cout << "Transformation: " << std::endl << *transformation << std::endl;
 
-    PointCloudPtr transformed_cloud = transformPointCloud(second_octree_ptr->getInputCloud(), *transformation);
-    VisualizeTwoPointClouds(first_octree_ptr->getInputCloud(), transformed_cloud);
+    PointCloudPtr transformed_cloud = transformTargetPointCloud(second_octree_ptr->getInputCloud(), *transformation);
+    visualizeTwoPointClouds(first_octree_ptr->getInputCloud(), transformed_cloud);
 
     return 0;
 }

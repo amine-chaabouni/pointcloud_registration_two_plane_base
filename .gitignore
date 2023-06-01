@@ -1,5 +1,6 @@
 *.txt
 !CMakeLists.txt
 build/
+third_lib
 cmake-build-debug/
 .idea/

@@ -7,19 +7,17 @@
 #include <utility>
 
 void
-generetaeBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases *bases, double min_angle,
-                              double max_angle) {
+generateBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases *bases, double min_angle,
+                             double max_angle) {
     auto nb_planes = plane_params.size();
     for (int i = 0; i < nb_planes; i++) {
         for (int j = i + 1; j < nb_planes; j++) {
             auto plane1 = plane_params[i];
             auto plane2 = plane_params[j];
             auto angle = angleBetweenVectors(plane1.first, plane2.first);
-            if (angle < min_angle || angle > max_angle) {
-                continue;
+            if (angle > min_angle && angle < max_angle) {
+                (*bases).emplace_back(i, j, angle);
             }
-
-            (*bases).emplace_back(i, j, angle);
         }
     }
 }
@@ -102,7 +100,7 @@ computeNormalDistances(const std::vector<PlaneParam> &source_planes,
     return std::make_pair(source_correspondence, target_correspondence);
 }
 
-std::pair<double, std::vector<std::pair<int, int>>>
+std::tuple<double, std::vector<std::pair<int, int>>, Eigen::Matrix3f>
 processBasePair(const std::vector<PlaneParam> &source_planes,
                 const std::vector<PlaneParam> &target_planes,
                 const std::pair<int, int> &source_base_pair,
@@ -146,7 +144,7 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
         //Estimate initial transformation parameters
         estimateRigidTransformation(source_planes, target_planes, plane_correspondence, transformation, false);
     } else {
-        return std::make_pair(-1, std::vector<std::pair<int, int>>());
+        return std::make_tuple(-1, std::vector<std::pair<int, int>>(), Eigen::Matrix3f::Identity());
     }
 
     // Transform source plane
@@ -184,14 +182,14 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
         }
     }
 
-    return std::make_pair(LCP, final_correspondence);
+    return std::make_tuple(LCP, final_correspondence, *rotation);
 }
 
 Correspondences
 findOptimalCorrespondences(const CompleteCloud &first_cloud,
                            const CompleteCloud &second_cloud) {
     double LCP = 0;
-    std::vector<std::pair<int, int>> plane_correspondence;
+    std::vector <std::pair<int, int>> plane_correspondence;
     double threshold = 1.0 * M_PI / 180.0;
     auto first_bases = std::get<2>(first_cloud);
     auto second_bases = std::get<2>(second_cloud);
@@ -221,6 +219,8 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
                 visualizePlanesOnCloud(std::get<0>(second_cloud)->getInputCloud(), indices);
 #endif
                 for (int runs = 0; runs < 2; runs++) {
+                    int i = std::get<0>(base_1);
+                    int j = std::get<1>(base_1);
                     int h, k;
                     if (runs == 0) {
                         h = std::get<0>(base_2);
@@ -230,18 +230,45 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
                         k = std::get<0>(base_2);
                     }
 
+                    // Visualize bases
+                    std::vector <pcl::Indices> first_cloud_indices(2);
+                    first_cloud_indices[0] = std::get<1>(first_cloud).second[i];
+                    first_cloud_indices[1] = std::get<1>(first_cloud).second[j];
+
+                    std::vector <pcl::Indices> second_cloud_indices(2);
+                    second_cloud_indices[0] = std::get<1>(second_cloud).second[h];
+                    second_cloud_indices[1] = std::get<1>(second_cloud).second[k];
+
+#if SHOW_ROTATION
+                    visualizeBases(std::get<0>(first_cloud)->getInputCloud(), first_cloud_indices,
+                                   std::get<0>(second_cloud)->getInputCloud(), second_cloud_indices);
+#endif
+                    // Compute the base correspondences
                     auto base_correspondences = processBasePair(std::get<1>(first_cloud).first,
                                                                 std::get<1>(second_cloud).first,
-                                                                std::make_pair(std::get<0>(base_1),
-                                                                               std::get<1>(base_1)),
+                                                                std::make_pair(i, j),
                                                                 std::make_pair(h, k));
 
-                    auto LCP_i = base_correspondences.first;
-                    auto plane_correspondence_i = base_correspondences.second;
+                    // Check if the LCP is greater than the current LCP
+                    auto LCP_i = std::get<0>(base_correspondences);
+                    if ( LCP_i == 0){
+                        continue;
+                    }
+                    auto plane_correspondence_i = std::get<1>(base_correspondences);
                     if (LCP_i > LCP) {
                         LCP = LCP_i;
                         plane_correspondence = plane_correspondence_i;
                     }
+
+                    // Visualize the base rotation
+#if SHOW_ROTATION
+                    auto rotation = std::get<2>(base_correspondences);
+                    auto transformed_source_cloud = rotatePointCloud(std::get<0>(first_cloud)->getInputCloud(),
+                                                                     rotation);
+                    visualizeBases(transformed_source_cloud, first_cloud_indices,
+                                   std::get<0>(second_cloud)->getInputCloud(), second_cloud_indices);
+#endif
+                    // Check if the LCP is already at the maximum
                     if (LCP == std::get<1>(first_cloud).first.size() || LCP == std::get<1>(second_cloud).first.size()) {
                         return plane_correspondence;
                     }

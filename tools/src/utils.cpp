@@ -59,4 +59,42 @@ void findRotationBetweenPlanes(const Eigen::MatrixXf &source_normals,
 
     // calculate rotation matrix
     *R = svd.matrixV() * svd.matrixU().transpose();
+    // Check if the matrix is a reflection
+    if( R->determinant() < 0 ){
+        *R = svd.matrixV() * (Eigen::Matrix3f() << 1, 0, 0, 0, 1, 0, 0, 0, -1).finished() * svd.matrixU().transpose();
+    }
+}
+
+PointCloudPtr
+transformTargetPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation) {
+    PointCloudPtr transformed_cloud(new PointCloud);
+    transformed_cloud = cloud->makeShared();
+    transformed_cloud->points.clear();
+
+    for (auto point: cloud->points) {
+        Eigen::Vector4f point_4d;
+        point_4d << point.x, point.y, point.z, 1;
+        auto transformed_point = point_4d.transpose() * transformation;
+        transformed_cloud->points.emplace_back(
+                pcl::PointXYZ(transformed_point(0), transformed_point(1), transformed_point(2))
+        );
+    }
+    return transformed_cloud;
+}
+
+PointCloudPtr
+rotatePointCloud(const PointCloud::ConstPtr &cloud, const Eigen::Matrix3f &rotation) {
+    PointCloudPtr rotated_cloud(new PointCloud);
+    rotated_cloud = cloud->makeShared();
+    rotated_cloud->points.clear();
+
+    for (auto point: cloud->points) {
+        Eigen::Vector3f point_3d;
+        point_3d << point.x, point.y, point.z;
+        auto transformed_point = rotation * point_3d;
+        rotated_cloud->points.emplace_back(
+                pcl::PointXYZ(transformed_point(0), transformed_point(1), transformed_point(2))
+        );
+    }
+    return rotated_cloud;
 }

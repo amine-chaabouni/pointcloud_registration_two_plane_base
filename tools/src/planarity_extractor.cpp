@@ -106,6 +106,7 @@ std::pair<Eigen::VectorXf, pcl::Indices> refinePlane(PointCloudPtr &plane, doubl
     ransac.setProbability(probability);
     ransac.setMaxIterations(max_iter);
     ransac.computeModel(1);
+
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     ransac.getInliers(inliers->indices);
 //    ransac.refineModel(3.0, 1000);
@@ -143,10 +144,15 @@ std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>  extractPlane(Octr
             continue;
         }
 
-        auto refined_plane = refinePlane(plane);
+        auto refined_plane = refinePlane(plane, 0.01, 0.99, 5000);
         auto coefficients = refined_plane.first;
         // indices should be updated after refinement
-//         indices = refined_plane.second;
+         auto refined_indices = refined_plane.second;
+         for(auto &index: refined_indices){
+             index = indices[index];
+         }
+
+
         if(coefficients.size() == 0) continue;
         Eigen::Vector3f normal(coefficients(0), coefficients(1), coefficients(2));
         double distance = coefficients(3);
@@ -157,7 +163,7 @@ std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>  extractPlane(Octr
         }
 
         params.emplace_back(normal, distance);
-        indice_vec.push_back(indices);
+        indice_vec.push_back(refined_indices);
 
 //        new_cloud->insert(new_cloud->end(), plane->begin(), plane->end());
     }

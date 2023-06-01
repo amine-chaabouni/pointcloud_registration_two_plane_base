@@ -11,6 +11,7 @@
 #define DEBUG 0
 #define VISUALIZE 0
 #define SHOW_ALL_BASES 0
+#define SHOW_ROTATION 0
 
 using Correspondences = std::vector<std::pair<int, int>>;
 using Planes = std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>;

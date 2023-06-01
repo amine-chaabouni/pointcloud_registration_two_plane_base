@@ -7,12 +7,13 @@
 
 #include "tool_types.h"
 #include "utils.h"
+#include "visualization.h"
 
 void
-generetaeBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases *bases, double min_angle,
+generateBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases *bases, double min_angle,
                               double max_angle);
 
-std::pair<double, std::vector<std::pair<int, int>>>
+std::tuple<double, std::vector<std::pair<int, int>>, Eigen::Matrix3f>
 processBasePair(const std::vector<PlaneParam> &source_planes,
                 const std::vector<PlaneParam> &target_planes,
                 const std::pair<int, int> &source_base_pair,
