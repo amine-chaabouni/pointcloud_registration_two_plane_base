@@ -13,7 +13,7 @@
 #define SHOW_ALL_PLANES 1
 #define SHOW_ALL_BASES 0
 #define SHOW_ROTATION 0
-#define ROTATION_ON_Z 0
+#define ROTATION_ON_Z 1
 
 using Correspondences = std::vector<std::pair<int, int>>;
 using Planes = std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>;
