@@ -8,46 +8,57 @@
 
 bool
 correspondencesValid(const std::vector<PlaneParam> &source_planes, const std::vector<PlaneParam> &target_planes,
-                     const Correspondences &final_correspondence) {
+                     const Correspondences &correspondences) {
     /*
      * Correspondences are valid if there are at least three non-collinear planes
      * An angle of PI counts as collinear
      */
-    if(final_correspondence.size() < 3) {
+
+    //
+    if (correspondences.size() < 3) {
         return false;
     }
+
+    // Angle threshold to consider two planes collinear
+    double angle_threshold = 5.0 * M_PI / 180.0;
+
     std::vector<int> source_possible_three_base_planes;
     std::vector<int> target_possible_three_base_planes;
 
-    source_possible_three_base_planes.emplace_back(final_correspondence[0].first);
-    target_possible_three_base_planes.emplace_back(final_correspondence[0].second);
+    source_possible_three_base_planes.emplace_back(correspondences[0].first);
+    target_possible_three_base_planes.emplace_back(correspondences[0].second);
 
-    for (int i = 1; i < final_correspondence.size(); i++) {
-        auto correspondence = final_correspondence[i];
+    for (int i = 1; i < correspondences.size(); i++) {
+        auto correspondence = correspondences[i];
+
+        // Check if the source plane is collinear with the previous ones
         auto source_plane = source_planes[correspondence.first];
-        int possible_new_source = 0;
+        int possible_part_of_base = 0;
 
         for (auto plane_idx: source_possible_three_base_planes) {
             auto angle = angleBetweenVectors(source_plane.first, source_planes[plane_idx].first);
-            if (angle > (5.0 * M_PI / 180.0) && angle < (175.0 * M_PI / 180.0)) {
-                possible_new_source++;
+            if (angle > angle_threshold && angle < (M_PI - angle_threshold)) {
+                possible_part_of_base++;
             }
         }
         int size_base = source_possible_three_base_planes.size();
-        if (possible_new_source >= std::min(2, size_base)) {
+        if (possible_part_of_base >= std::min(2, size_base)) {
+            // The plane is not collinear with the previous ones and can be added
             source_possible_three_base_planes.emplace_back(correspondence.first);
         }
 
+        // Check if the target plane is collinear with the previous ones
         auto target_plane = target_planes[correspondence.second];
-        int possible_new_target = 0;
+        possible_part_of_base = 0;
         for (auto plane_idx: target_possible_three_base_planes) {
             auto angle = angleBetweenVectors(target_plane.first, target_planes[plane_idx].first);
-            if (angle > (5.0 * M_PI / 180.0) && angle < (175.0 * M_PI / 180.0)) {
-                possible_new_target++;
+            if (angle > angle_threshold && angle < (M_PI - angle_threshold)) {
+                possible_part_of_base++;
             }
         }
         size_base = target_possible_three_base_planes.size();
-        if (possible_new_target >=  std::min(2, size_base)) {
+        if (possible_part_of_base >= std::min(2, size_base)) {
+            // The plane is not collinear with the previous ones and can be added
             target_possible_three_base_planes.emplace_back(correspondence.second);
         }
     }
@@ -71,14 +82,21 @@ generateBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases 
 }
 
 Correspondences
-identifyPlaneCorrespondences(std::vector<std::pair<int, double>> &source_correspondences,
-                             std::vector<std::pair<int, double>> &target_correspondences) {
+identifyPlaneCorrespondences(
+        std::pair<std::vector<std::pair<int, double>>, std::vector<std::pair<int, double>>> &computed_correspondences) {
+
+    auto source_correspondences = computed_correspondences.first;
+    auto target_correspondences = computed_correspondences.second;
+
     std::vector<std::pair<int, int>> plane_correspondence;
+
+    // Check that if a plane (i) is matched to another plane (h), the other plane (h) is also matched to the first one (i)
     for (int i = 0; i < source_correspondences.size(); i++) {
         auto source_correspondence = source_correspondences[i];
-        if(source_correspondence.first == -1) {
+        if (source_correspondence.first == -1) {
             continue;
         }
+        // source_correspondences[i].first = h
         auto target_correspondence = target_correspondences[source_correspondence.first];
         if (target_correspondence.first == i) {
             // pair source_id, target_id
@@ -95,12 +113,13 @@ estimateTranslationParameters(const std::vector<PlaneParam> &source_planes,
                               const std::vector<std::pair<int, int>> &plane_correspondences,
                               std::shared_ptr<Eigen::Vector3f> translation) {
     // compute the translation between the two planes
-
     Eigen::MatrixXf target_normals(3, plane_correspondences.size());
+
     Eigen::VectorXf target_d(plane_correspondences.size());
     Eigen::VectorXf source_d(plane_correspondences.size());
     for (int i = 0; i < plane_correspondences.size(); i++) {
         target_normals.col(i) = target_planes[plane_correspondences[i].second].first;
+
         target_d(i) = target_planes[plane_correspondences[i].second].second;
         source_d(i) = source_planes[plane_correspondences[i].first].second;
     }
@@ -112,6 +131,7 @@ estimateTranslationParameters(const std::vector<PlaneParam> &source_planes,
 #endif
 //    *translation =  (target_normals * target_normals.transpose()).inverse() * target_normals * distance;
 //    *translation = target_normals.transpose().colPivHouseholderQr().solve(distance);
+    // Compute the translation using the Least Squares solver
     *translation = target_normals.transpose().bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(distance);
 }
 
@@ -119,20 +139,22 @@ std::pair<std::vector<std::pair<int, double>>, std::vector<std::pair<int, double
 computeNormalDistances(const std::vector<PlaneParam> &source_planes,
                        const std::vector<PlaneParam> &target_planes,
                        const Eigen::Matrix3f &rotation) {
-#if DEBUG
-    std::cout << "Rotation: " << std::endl << rotation << std::endl;
-#endif
+    // For each plane in the source, find the closest plane in the target
     std::vector<std::pair<int, double>> source_correspondence(source_planes.size(), std::make_pair(-1, -1));
+    // For each plane in the target, find the closest plane in the source
     std::vector<std::pair<int, double>> target_correspondence(target_planes.size(), std::make_pair(-1, -1));
 
     for (int h = 0; h < source_planes.size(); h++) {
         auto source_plane = source_planes[h];
         Eigen::Vector3f normal = source_plane.first;
+
+        // Rotate the source plane to be collinear to its target (if it exists)
         auto rotated_normal = rotation * normal;
 
         for (int k = 0; k < target_planes.size(); k++) {
             auto target_plane = target_planes[k];
             auto dist = (rotated_normal - target_plane.first).norm();
+
             if (dist > 0.1) {
                 // The vectors do not correspond
                 continue;
@@ -155,6 +177,7 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
                 const std::vector<PlaneParam> &target_planes,
                 const std::pair<int, int> &source_base_pair,
                 const std::pair<int, int> &target_base_pair) {
+    // Select the base pair of planes
     auto source_plane_i = source_planes[source_base_pair.first];
     auto source_plane_j = source_planes[source_base_pair.second];
 
@@ -192,11 +215,9 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
 
     // Rotate source cloud and create correspondences of planes
     auto correspondences = computeNormalDistances(source_planes, target_planes, *rotation);
-    auto source_correspondence = correspondences.first;
-    auto target_correspondence = correspondences.second;
 
     // Identify initial plane correspondences
-    auto plane_correspondence = identifyPlaneCorrespondences(source_correspondence, target_correspondence);
+    auto plane_correspondence = identifyPlaneCorrespondences(correspondences);
 
 #if DEBUG
     std::cout << "Compute initial correspondences for base (" << source_base_pair.first << ", "
@@ -208,47 +229,42 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
     }
 #endif
 
-    std::shared_ptr<Eigen::MatrixXf> transformation(new Eigen::MatrixXf);
-
+    //Estimate initial transformation parameters
+    Eigen::MatrixXf transformation;
     if (correspondencesValid(source_planes, target_planes, plane_correspondence)) {
-        //Estimate initial transformation parameters
         estimateRigidTransformation(source_planes, target_planes, plane_correspondence, transformation, true);
     } else {
         return std::make_tuple(-1, std::vector<std::pair<int, int>>(), *rotation);
     }
 
-    // Transform source plane
+    // Transform target plane
     std::vector<PlaneParam> transformed_target_planes;
     for (const auto &target_plane: target_planes) {
         Eigen::Vector4f normal;
         normal << target_plane.first, target_plane.second;
-        auto transformed_normal = normal.transpose() * (*transformation);
+        auto transformed_normal = normal.transpose() * transformation;
         transformed_target_planes.emplace_back(
                 Eigen::Vector3f(transformed_normal(0), transformed_normal(1), transformed_normal(2)),
                 transformed_normal(3)
         );
     }
 
-    auto new_correspondences = computeNormalDistances(source_planes, transformed_target_planes,
-                                                      Eigen::Matrix3f::Identity());
-    auto new_source_correspondence = new_correspondences.first;
-    auto new_target_correspondence = new_correspondences.second;
-
-    auto new_plane_correspondence = identifyPlaneCorrespondences(new_source_correspondence, new_target_correspondence);
+    correspondences = computeNormalDistances(source_planes, transformed_target_planes, Eigen::Matrix3f::Identity());
+    plane_correspondence = identifyPlaneCorrespondences(correspondences);
 
 #if DEBUG
     std::cout << "Compute new correspondences for base (" << source_base_pair.first << ", " << source_base_pair.second
               << ") and (" << target_base_pair.first << ", " << target_base_pair.second << ")" << std::endl;
-    std::cout << "There are : " << new_plane_correspondence.size() << " correspondences" << std::endl;
-    for(auto & corr: new_plane_correspondence){
+    std::cout << "There are : " << plane_correspondence.size() << " correspondences" << std::endl;
+    for(auto & corr: plane_correspondence){
         std::cout << "source : " << corr.first << " -- target : " << corr.second << std::endl;
     }
 #endif
 
     auto LCP = 0;
-    auto threshold = 1.5;
+    auto threshold = 0.5;
     std::vector<std::pair<int, int>> final_correspondence;
-    for (const auto &plane_corr: new_plane_correspondence) {
+    for (const auto &plane_corr: plane_correspondence) {
         // Check if the distance between the two planes is less than the threshold
 #if DEBUG
         std::cout << "Correspondance " << "source " << plane_corr.first << " target " << plane_corr.second << " : "
@@ -274,17 +290,15 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
     }
 #endif
 
-    if (correspondencesValid(source_planes, transformed_target_planes, final_correspondence)) {
+    if (correspondencesValid(source_planes, target_planes, final_correspondence)) {
 #if DEBUG
         std::cout << "Correspondences are valid" << std::endl;
 #endif
         return std::make_tuple(LCP, final_correspondence, *rotation);
-    }
-    else{
+    } else {
 #if DEBUG
         std::cout << "Correspondences are not valid" << std::endl;
 #endif
-//        return std::make_tuple(LCP, final_correspondence, *rotation);
         return std::make_tuple(-1, std::vector<std::pair<int, int>>(), *rotation);
     }
 }
@@ -296,7 +310,10 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
     std::vector<std::pair<int, int>> plane_correspondence;
     Eigen::Matrix3f best_rotation = Eigen::Matrix3f::Identity();
     std::pair<int, int> best_base_pair;
+
+    // Threshold to consider bases are corresponding
     double threshold = 1.0 * M_PI / 180.0;
+
     auto first_bases = std::get<2>(first_cloud);
     auto second_bases = std::get<2>(second_cloud);
 
@@ -343,6 +360,7 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
                         k = std::get<0>(base_2);
                     }
 
+#if SHOW_ROTATION
                     // Visualize bases
                     Planes first_planes;
                     std::vector<PlaneParam> first_planes_params(2);
@@ -361,8 +379,6 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
                     second_cloud_indices[0] = std::get<1>(second_cloud).second[h];
                     second_cloud_indices[1] = std::get<1>(second_cloud).second[k];
                     second_planes = std::make_pair(second_planes_params, second_cloud_indices);
-
-#if SHOW_ROTATION
                     visualizeBases(std::get<0>(first_cloud)->getInputCloud(), first_planes,
                                    std::get<0>(second_cloud)->getInputCloud(), second_planes);
 #endif
@@ -418,7 +434,7 @@ void
 estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
                             const std::vector<PlaneParam> &target_planes,
                             const Correspondences &correspondences,
-                            std::shared_ptr<Eigen::MatrixXf> &transformation,
+                            Eigen::MatrixXf &transformation,
                             bool with_translation) {
     // Compute optimal transformation
 #if ROTATION_ON_Z
@@ -442,14 +458,14 @@ estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
     findRotationBetweenPlanes(source_normals, target_normals, rotation);
 
     // Compute the transformation matrix
-    transformation->resize(4, 4); //4x4
-    transformation->block<3, 3>(0, 0) = *rotation;
+    transformation.resize(4, 4); //4x4
+    transformation.block<3, 3>(0, 0) = *rotation;
     if (with_translation) {
         std::shared_ptr<Eigen::Vector3f> translation(new Eigen::Vector3f());
         estimateTranslationParameters(source_planes, target_planes, correspondences, translation);
-        transformation->block(0, 3, 3, 1) = *translation;
+        transformation.block(0, 3, 3, 1) = *translation;
     } else {
-        transformation->block(0, 3, 3, 1) = Eigen::Vector3f(0, 0, 0);
+        transformation.block(0, 3, 3, 1) = Eigen::Vector3f(0, 0, 0);
     }
-    transformation->block(3, 0, 1, 4) = Eigen::Vector4f(0, 0, 0, 1).transpose();
+    transformation.block(3, 0, 1, 4) = Eigen::Vector4f(0, 0, 0, 1).transpose();
 }

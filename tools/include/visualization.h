@@ -6,6 +6,7 @@
 #define VOXEL_BASED_REGISTRATION_VISUALIZATION_H
 
 #include "tool_types.h"
+#include "utils.h"
 
 /**
  * @brief Add a vector representing the normal of a plane
@@ -39,7 +40,7 @@ preparePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::I
  */
 void
 prepareTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const PointCloud::ConstPtr &second_cloud,
-                           pcl::visualization::PCLVisualizer &viewer);
+                      pcl::visualization::PCLVisualizer &viewer);
 
 
 /**
@@ -96,6 +97,23 @@ visualizeTwoPointClouds(const PointCloud::ConstPtr &first_cloud, const PointClou
  */
 void
 visualizeBases(const PointCloud::ConstPtr &first_cloud, const Planes &first_planes,
-                    const PointCloud::ConstPtr &second_cloud, const Planes &second_planes);
+               const PointCloud::ConstPtr &second_cloud, const Planes &second_planes);
+
+
+/**
+ * @brief Visualize the source and target point clouds after transformation
+ * @details two visualization:
+ * 1. Source is in red and target is in blue
+ * 2. Source and target in white and their corresponding planes in different colors from red to blue
+ * @param first_cloud
+ * @param second_cloud
+ * @param optimal_correspondence
+ * @param transformation
+ * @param lidar_resolution
+ */
+void
+visualizeFinalResults(const CompleteCloud &source_cloud, const CompleteCloud &target_cloud,
+                      const Correspondences &optimal_correspondence, const Eigen::Matrix4f &transformation,
+                      double lidar_resolution);
 
 #endif //VOXEL_BASED_REGISTRATION_VISUALIZATION_H

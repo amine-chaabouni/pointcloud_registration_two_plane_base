@@ -68,8 +68,8 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
  * @return A list of correspondences between the source and target planes
  */
 Correspondences
-identifyPlaneCorrespondences(std::vector<std::pair<int, double>> &source_correspondences,
-                             std::vector<std::pair<int, double>> &target_correspondences);
+identifyPlaneCorrespondences(
+        std::pair<std::vector<std::pair<int, double>>, std::vector<std::pair<int, double>>> &computed_correspondences);
 
 
 /**
@@ -77,6 +77,8 @@ identifyPlaneCorrespondences(std::vector<std::pair<int, double>> &source_corresp
  * @details Estimate the translation parameters by computing the average translation between the source and target planes
  * The mathematical formula is as follow:
  * target_normal.T * translation = (source_distance - target_distance)
+ *
+ * We use a Least Square approach to estimate the translation parameters
  *
  * The geometric interpretation is as follow:
  * For two corresponding planes, the distance between them, considering that they are collinear, is the difference of distance between the origin and the source plane and between the origin and the target plane
@@ -139,7 +141,7 @@ void
 estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
                             const std::vector<PlaneParam> &target_planes,
                             const Correspondences &correspondences,
-                            std::shared_ptr<Eigen::MatrixXf> &transformation,
+                            Eigen::MatrixXf &transformation,
                             bool with_translation);
 
 #endif //VOXEL_BASED_REGISTRATION_BASE_PROCESSOR_H

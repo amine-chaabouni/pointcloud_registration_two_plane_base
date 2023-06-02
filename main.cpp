@@ -60,71 +60,109 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
 }
 
 
+std::tuple<bool, Correspondences, Eigen::Matrix4f>
+executeRegression(const CompleteCloud source_cloud, const CompleteCloud target_cloud) {
+
+    auto source_octree_ptr = std::get<0>(source_cloud);
+    auto source_planes = std::get<1>(source_cloud);
+    auto source_bases = std::get<2>(source_cloud);
+#if MINIMAL_OUTPUT
+    std::cout << "Source cloud has " << source_planes.first.size() << " planes" << std::endl;
+    std::cout << "Source cloud has " << source_bases.size() << " bases" << std::endl;
+#endif
+
+    auto target_octree_ptr = std::get<0>(target_cloud);
+    auto target_planes = std::get<1>(target_cloud);
+    auto target_bases = std::get<2>(target_cloud);
+#if MINIMAL_OUTPUT
+    std::cout << "Target cloud has " << target_planes.first.size() << " planes" << std::endl;
+    std::cout << "Target cloud has " << target_bases.size() << " bases" << std::endl;
+#endif
+
+    // Compute correspondences
+    auto optimal_correspondence = findOptimalCorrespondences(source_cloud, target_cloud);
+    if (optimal_correspondence.size() < 3) {
+        optimal_correspondence.clear();
+        return std::make_tuple(false, optimal_correspondence, Eigen::Matrix4f::Identity());
+    }
+
+    // Compute the transformation
+    Eigen::MatrixXf transformation;
+    estimateRigidTransformation(source_planes.first, target_planes.first, optimal_correspondence, transformation, true);
+
+
+    return std::make_tuple(true, optimal_correspondence, transformation);
+}
+
+
 int main(int argc, char **argv) {
 
 #if CLION_DEBUG
-    std::string cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
-    double lidar_resolution = 0.5;
-    double rgbd_resolution = 0.5;
-    int lidar_min_points_per_voxel = 1000;
-    int rgbd_ min_points_per_voxel = 1000;
+    std::string source_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
+    std::string target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
+    double source_resolution = 0.5;
+    double target_resolution = 0.5;
+    int source_min_points_per_voxel = 1000;
+    int target_min_points_per_voxel = 1000;
     double planarity_score = 0.6;
 #else
-    if (argc != 7) {
-        std::cerr << "ERROR: Syntax is octreeVisu <pcd file> <lidar_resolution> <lidar_min_points_per_voxel> <rgbd_resolution> <rgbd_min_points_per_voxel> <planarity_score>" << std::endl;
-        std::cerr << "EXAMPLE: ./main file_path voxel_size_for_lidar lidar_min_points_per_voxel voxel_size_for_rgbd rgbd_min_points_per_voxel planarity_score" << std::endl;
+    if (argc != 8) {
+        std::cerr
+                << "ERROR: Syntax is ./main <source pcd file> <target pcd file> <lidar_resolution> <lidar_min_points_per_voxel> <rgbd_resolution> <rgbd_min_points_per_voxel> <planarity_score>"
+                << std::endl;
         return -1;
     }
-    std::string cloud_path(argv[1]);
-    double lidar_resolution = std::atof(argv[2]);
-    int lidar_min_points_per_voxel = std::atof(argv[3]);
-    double rgbd_resolution = std::atof(argv[4]);
-    int rgbd_min_points_per_voxel = std::atoi(argv[5]);
-    double planarity_score = std::atof(argv[6]);
+    std::string source_cloud_path(argv[1]);
+    std::string target_cloud_path(argv[2]);
+
+    double source_resolution = std::atof(argv[3]);
+    int source_min_points_per_voxel = std::atof(argv[4]);
+
+    double target_resolution = std::atof(argv[5]);
+    int target_min_points_per_voxel = std::atoi(argv[6]);
+
+    double planarity_score = std::atof(argv[7]);
 #endif
 
-    cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/lidar_0_0.pcd";
-    auto first_cloud = preparePointCloud(cloud_path, lidar_resolution, lidar_min_points_per_voxel, planarity_score);
-    auto first_octree_ptr = std::get<0>(first_cloud);
-    auto first_planes = std::get<1>(first_cloud);
-    auto first_bases = std::get<2>(first_cloud);
-    std::cout << "First cloud has " << first_planes.first.size() << " planes" << std::endl;
-    std::cout << "First cloud has " << first_bases.size() << " bases" << std::endl;
+    source_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/lidar_0_0.pcd";
 
-    cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
-    auto second_cloud = preparePointCloud(cloud_path, rgbd_resolution, rgbd_min_points_per_voxel, planarity_score);
-    auto second_octree_ptr = std::get<0>(second_cloud);
-    auto second_planes = std::get<1>(second_cloud);
-    auto second_bases = std::get<2>(second_cloud);
-    std::cout << "Second cloud has " << second_planes.first.size() << " planes" << std::endl;
-    std::cout << "Second cloud has " << second_bases.size() << " bases" << std::endl;
+    clock_t begin_time = clock();
+    auto source_cloud = preparePointCloud(source_cloud_path, source_resolution, source_min_points_per_voxel,
+                                          planarity_score);
+    std::cout << "Source cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
 
-    visualizeTwoPointClouds(first_octree_ptr->getInputCloud(), second_octree_ptr->getInputCloud());
 
-    auto optimal_correspondence = findOptimalCorrespondences(first_cloud, second_cloud);
-    if(optimal_correspondence.size() < 3){
-        std::cout << "Not enough correspondences found" << std::endl;
+    target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
+    begin_time = clock();
+    auto target_cloud = preparePointCloud(target_cloud_path, target_resolution, target_min_points_per_voxel,
+                                          planarity_score);
+    std::cout << "Target cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+
+    begin_time = clock();
+
+    auto regression_result = executeRegression(source_cloud, target_cloud);
+
+    std::cout << "Regression computed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+
+    auto success = std::get<0>(regression_result);
+    if (!success) {
+        std::cout << "Regression failed" << std::endl;
         return -1;
     }
+    std::cout << "Regression succeeded" << std::endl;
 
-    for (auto corr: optimal_correspondence)
+
+    auto optimal_correspondence = std::get<1>(regression_result);
+    for (auto corr: optimal_correspondence) {
         std::cout << "optimal_correspondence: " << corr.first << " and " << corr.second << std::endl;
+    }
 
-    // Visualize Correspondances
-    visualizeCorrespondences(first_cloud, second_cloud, optimal_correspondence);
+    auto transformation = std::get<2>(regression_result);
+    std::cout << "Transformation: " << std::endl << transformation << std::endl;
 
-    // Compute the transformation
-    std::shared_ptr<Eigen::MatrixXf> transformation(new Eigen::MatrixXf);
-    estimateRigidTransformation(first_planes.first, second_planes.first, optimal_correspondence, transformation, true);
-    std::cout << "Transformation: " << std::endl << *transformation << std::endl;
-
-    PointCloudPtr transformed_cloud = transformTargetPointCloud(first_octree_ptr->getInputCloud(), *transformation);
-    visualizeTwoPointClouds(second_octree_ptr->getInputCloud(), transformed_cloud);
-
-    // Visualize Correspondances
-    Octree::Ptr transformed_octree_ptr = std::make_shared<Octree>(toOctree(transformed_cloud, lidar_resolution));
-    CompleteCloud transformed_cloud_complete = std::make_tuple(transformed_octree_ptr, first_planes, first_bases);
-    visualizeCorrespondences(transformed_cloud_complete, second_cloud, optimal_correspondence);
+#if VISUALIZE_FINAL_RESULTS
+    visualizeFinalResults(source_cloud, target_cloud, optimal_correspondence, transformation, source_resolution);
+#endif
 
     return 0;
 }

@@ -160,3 +160,27 @@ void visualizePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector
     }
     viewer.close();
 }
+
+
+void visualizeFinalResults(const CompleteCloud &source_cloud, const CompleteCloud &target_cloud,
+                           const Correspondences &optimal_correspondence, const Eigen::Matrix4f &transformation,
+                           double lidar_resolution) {
+    // Visualize Correspondances
+    visualizeCorrespondences(source_cloud, target_cloud, optimal_correspondence);
+
+    auto first_octree_ptr = std::get<0>(source_cloud);
+    auto first_planes = std::get<1>(source_cloud);
+    auto first_bases = std::get<2>(source_cloud);
+
+    auto second_octree_ptr = std::get<0>(target_cloud);
+    auto second_planes = std::get<1>(target_cloud);
+    auto second_bases = std::get<2>(target_cloud);
+
+    PointCloudPtr transformed_cloud = transformTargetPointCloud(first_octree_ptr->getInputCloud(), transformation);
+    visualizeTwoPointClouds(second_octree_ptr->getInputCloud(), transformed_cloud);
+
+    // Visualize Correspondances
+    Octree::Ptr transformed_octree_ptr = std::make_shared<Octree>(toOctree(transformed_cloud, lidar_resolution));
+    CompleteCloud transformed_cloud_complete = std::make_tuple(transformed_octree_ptr, first_planes, first_bases);
+    visualizeCorrespondences(transformed_cloud_complete, target_cloud, optimal_correspondence);
+}

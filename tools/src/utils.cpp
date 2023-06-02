@@ -59,25 +59,26 @@ void findRotationBetweenPlanes(const Eigen::MatrixXf &source_normals,
     Eigen::MatrixXf normals_matrix = source_normals * target_normals.transpose();
     Eigen::JacobiSVD<Eigen::MatrixXf> svd(normals_matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
+    int dim = source_normals.rows();
 
-
-#if ROTATION_ON_Z
-     // For rotation only on z axis
-    Eigen::Matrix2f rotation = svd.matrixV() * svd.matrixU().transpose();
-    // Check if the matrix is a reflection
-    if( rotation.determinant() < 0 ){
-        rotation = svd.matrixV() * (Eigen::Matrix2f() << 1, 0, 0, -1).finished() * svd.matrixU().transpose();
+    if (dim == 2) {
+        // For rotation only around z axis
+        Eigen::Matrix2f rotation = svd.matrixV() * svd.matrixU().transpose();
+        // Check if the matrix is a reflection
+        if (rotation.determinant() < 0) {
+            rotation = svd.matrixV() * (Eigen::Matrix2f() << 1, 0, 0, -1).finished() * svd.matrixU().transpose();
+        }
+        *R = Eigen::Matrix3f::Identity();
+        R->block<2, 2>(0, 0) = rotation;
+    } else {
+        // Rotation in 3D
+        *R = svd.matrixV() * svd.matrixU().transpose();
+        // Check if the matrix is a reflection
+        if (R->determinant() < 0) {
+            *R = svd.matrixV() * (Eigen::Matrix3f() << 1, 0, 0, 0, 1, 0, 0, 0, -1).finished() *
+                 svd.matrixU().transpose();
+        }
     }
-    *R = Eigen::Matrix3f::Identity();
-    R->block<2, 2>(0, 0) = rotation;
-#else
-// calculate rotation matrix
-    *R = svd.matrixV() * svd.matrixU().transpose();
-    // Check if the matrix is a reflection
-    if( R->determinant() < 0 ){
-        *R = svd.matrixV() * (Eigen::Matrix3f() << 1, 0, 0, 0, 1, 0, 0, 0, -1).finished() * svd.matrixU().transpose();
-    }
-#endif
 }
 
 PointCloudPtr
