@@ -31,7 +31,7 @@ void removePointsFromCloud(PointCloud::Ptr &cloud, pcl::PointIndices::Ptr &outli
     std::cout << cloud->size() << std::endl;
 
     extract.setInputCloud(cloud);
-    extract.setIndices(inliers);
+    extract.setIndices(outliers);
     extract.setNegative(true);
     std::cout << "using filter " << std::endl;
     extract.filter(*cloud);
