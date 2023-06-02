@@ -26,7 +26,7 @@ double computePlanarityScore(Octree::Ptr &octree, LeafContainerT &leaf, PointT &
 }
 
 
-void removePointsFromCloud(PointCloud::Ptr &cloud, pcl::PointIndices::Ptr &inliers) {
+void removePointsFromCloud(PointCloud::Ptr &cloud, pcl::PointIndices::Ptr &outliers) {
     pcl::ExtractIndices<pcl::PointXYZ> extract;
     std::cout << cloud->size() << std::endl;
 
