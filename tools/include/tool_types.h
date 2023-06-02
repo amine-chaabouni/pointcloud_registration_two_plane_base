@@ -8,6 +8,7 @@
 
 #include "types.h"
 
+#define MINIMAL_OUTPUT 1
 #define DEBUG 0
 #define VISUALIZE 0
 #define SHOW_ALL_PLANES 1

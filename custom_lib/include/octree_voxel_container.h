@@ -21,8 +21,8 @@ namespace pcl::octree {
         ~OctreeVoxelContainer() override = default;
 
         /** \brief deep copy function */
-        virtual OctreeVoxelContainer *
-        deepCopy() const {
+        OctreeVoxelContainer *
+        deepCopy() const override {
             return (new OctreeVoxelContainer(*this));
         }
 

@@ -41,12 +41,12 @@ extractPlane(Octree::Ptr &octree);
  * \f$ \frac{\lambda_3}{\lambda_1 + \lambda_2 + \lambda_3} \f$
  * where \f$ \lambda_1, \lambda_2, \lambda_3 \f$ are the eigenvalues of the covariance matrix in increasing order
  * @param octree
- * @param leaf
+ * @param indices
  * @param centroid
- * @return pla,arity score
+ * @return planarity score
  */
 double
-computePlanarityScore(Octree::Ptr &octree, LeafContainerT &leaf, PointT &centroid);
+computePlanarityScore(Octree::Ptr &octree, pcl::Indices &indices, PointT &centroid);
 
 
 /**
