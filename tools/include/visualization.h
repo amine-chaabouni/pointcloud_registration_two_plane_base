@@ -29,7 +29,7 @@ addNormals(const PointT &point_on_plane, Eigen::Vector3f &normal, pcl::visualiza
  */
 void
 preparePlanesOnCloud(const PointCloud::ConstPtr &cloud, const std::vector<pcl::Indices> &planes,
-                     pcl::visualization::PCLVisualizer &viewer, const std::string &name);
+                     pcl::visualization::PCLVisualizer &viewer, const std::string &name, int r, int g, int b);
 
 
 /**

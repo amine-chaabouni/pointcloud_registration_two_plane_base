@@ -8,11 +8,11 @@
 
 #include "types.h"
 
-#define MINIMAL_OUTPUT 0
+#define MINIMAL_OUTPUT 1
 #define DEBUG 0
 #define VISUALIZE 0
-#define VISUALIZE_FINAL_RESULTS 0
-#define SHOW_ALL_PLANES 0
+#define VISUALIZE_FINAL_RESULTS 1
+#define SHOW_ALL_PLANES 1
 #define SHOW_ALL_BASES 0
 #define SHOW_ROTATION 0
 #define ROTATION_ON_Z 1

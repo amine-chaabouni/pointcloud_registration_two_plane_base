@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
     double planarity_score = std::atof(argv[7]);
 #endif
 
-    source_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/lidar_0_0.pcd";
+//    source_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/lidar_0_0.pcd";
 
     clock_t begin_time = clock();
     auto source_cloud = preparePointCloud(source_cloud_path, source_resolution, source_min_points_per_voxel,
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     std::cout << "Source cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
 
 
-    target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
+//    target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
     begin_time = clock();
     auto target_cloud = preparePointCloud(target_cloud_path, target_resolution, target_min_points_per_voxel,
                                           planarity_score);
