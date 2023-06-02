@@ -62,8 +62,7 @@ void findRotationBetweenPlanes(const Eigen::MatrixXf &source_normals,
 
 
 #if ROTATION_ON_Z
-     For rotation only on z axis
-    // calculate rotation matrix
+     // For rotation only on z axis
     Eigen::Matrix2f rotation = svd.matrixV() * svd.matrixU().transpose();
     // Check if the matrix is a reflection
     if( rotation.determinant() < 0 ){
