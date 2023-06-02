@@ -13,6 +13,9 @@ correspondencesValid(const std::vector<PlaneParam> &source_planes, const std::ve
      * Correspondences are valid if there are at least three non-collinear planes
      * An angle of PI counts as collinear
      */
+    if(final_correspondence.size() < 3) {
+        return false;
+    }
     std::vector<int> source_possible_three_base_planes;
     std::vector<int> target_possible_three_base_planes;
 
@@ -73,6 +76,9 @@ identifyPlaneCorrespondences(std::vector<std::pair<int, double>> &source_corresp
     std::vector<std::pair<int, int>> plane_correspondence;
     for (int i = 0; i < source_correspondences.size(); i++) {
         auto source_correspondence = source_correspondences[i];
+        if(source_correspondence.first == -1) {
+            continue;
+        }
         auto target_correspondence = target_correspondences[source_correspondence.first];
         if (target_correspondence.first == i) {
             // pair source_id, target_id
@@ -117,7 +123,7 @@ computeNormalDistances(const std::vector<PlaneParam> &source_planes,
     std::cout << "Rotation: " << std::endl << rotation << std::endl;
 #endif
     std::vector<std::pair<int, double>> source_correspondence(source_planes.size(), std::make_pair(-1, -1));
-    std::vector<std::pair<int, double>> target_correspondence(source_planes.size(), std::make_pair(-1, -1));
+    std::vector<std::pair<int, double>> target_correspondence(target_planes.size(), std::make_pair(-1, -1));
 
     for (int h = 0; h < source_planes.size(); h++) {
         auto source_plane = source_planes[h];
@@ -189,19 +195,22 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
     auto source_correspondence = correspondences.first;
     auto target_correspondence = correspondences.second;
 
+    // Identify initial plane correspondences
+    auto plane_correspondence = identifyPlaneCorrespondences(source_correspondence, target_correspondence);
+
 #if DEBUG
     std::cout << "Compute initial correspondences for base (" << source_base_pair.first << ", "
               << source_base_pair.second
               << ") and (" << target_base_pair.first << ", " << target_base_pair.second << ")" << std::endl;
-    std::cout << "There are : " << source_correspondence.size() << " correspondences" << std::endl;
+    std::cout << "There are : " << plane_correspondence.size() << " correspondences" << std::endl;
+    for(auto & corr: plane_correspondence){
+        std::cout << "source : " << corr.first << " -- target :" << corr.second << std::endl;
+    }
 #endif
-
-    // Identify initial plane correspondences
-    auto plane_correspondence = identifyPlaneCorrespondences(source_correspondence, target_correspondence);
 
     std::shared_ptr<Eigen::MatrixXf> transformation(new Eigen::MatrixXf);
 
-    if (plane_correspondence.size() >= 2) {
+    if (correspondencesValid(source_planes, target_planes, plane_correspondence)) {
         //Estimate initial transformation parameters
         estimateRigidTransformation(source_planes, target_planes, plane_correspondence, transformation, true);
     } else {
@@ -231,6 +240,9 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
     std::cout << "Compute new correspondences for base (" << source_base_pair.first << ", " << source_base_pair.second
               << ") and (" << target_base_pair.first << ", " << target_base_pair.second << ")" << std::endl;
     std::cout << "There are : " << new_plane_correspondence.size() << " correspondences" << std::endl;
+    for(auto & corr: new_plane_correspondence){
+        std::cout << "source : " << corr.first << " -- target : " << corr.second << std::endl;
+    }
 #endif
 
     auto LCP = 0;
@@ -257,12 +269,22 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
               << source_base_pair.second
               << ") and (" << target_base_pair.first << ", " << target_base_pair.second << ")" << std::endl;
     std::cout << "There are : " << final_correspondence.size() << " correspondences" << std::endl;
+    for(auto& corr: final_correspondence){
+        std::cout << "source : " << corr.first << " -- target : " << corr.second << std::endl;
+    }
 #endif
 
     if (correspondencesValid(source_planes, transformed_target_planes, final_correspondence)) {
+#if DEBUG
+        std::cout << "Correspondences are valid" << std::endl;
+#endif
         return std::make_tuple(LCP, final_correspondence, *rotation);
     }
     else{
+#if DEBUG
+        std::cout << "Correspondences are not valid" << std::endl;
+#endif
+//        return std::make_tuple(LCP, final_correspondence, *rotation);
         return std::make_tuple(-1, std::vector<std::pair<int, int>>(), *rotation);
     }
 }
@@ -387,7 +409,7 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
     std::cout << "nb_base_pairs: " << nb_base_pairs << std::endl;
     std::cout << "LCP: " << LCP << std::endl;
     std::cout << "best rotation = " << std::endl << best_rotation << std::endl;
-    std::cout << "best base pair = " << std::endl << best_base_pair.first << "and" << best_base_pair.second
+    std::cout << "best base pair = " << std::endl << best_base_pair.first << " and " << best_base_pair.second
               << std::endl;
     return plane_correspondence;
 }
