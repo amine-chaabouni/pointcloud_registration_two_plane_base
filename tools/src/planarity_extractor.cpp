@@ -162,8 +162,22 @@ std::pair<std::vector<PlaneParam>, std::vector<pcl::Indices>>  extractPlane(Octr
             distance = -distance;
         }
 
-        params.emplace_back(normal, distance);
-        indice_vec.push_back(refined_indices);
+        // check if the plane is already in the list
+        bool new_plane = true;
+        int i = 0;
+        while(i < params.size() && new_plane){
+            auto param = params[i];
+            if(param.first.isApprox(normal, 0.01) && std::abs(param.second - distance) < 0.01){
+                // Plane already exists
+                new_plane = false;
+            }
+            i++;
+        }
+
+        if(new_plane){
+            params.emplace_back(normal, distance);
+            indice_vec.push_back(refined_indices);
+        }
 
 //        new_cloud->insert(new_cloud->end(), plane->begin(), plane->end());
     }
