@@ -21,6 +21,6 @@ using LeafContainerT = pcl::octree::OctreeVoxelContainer<PointT>;
 using PointCloud = pcl::PointCloud<PointT>;
 using PointCloudPtr = PointCloud::Ptr;
 using Octree = pcl::octree::OctreeVoxelBasedRegistration<PointT, LeafContainerT>;
-using PlaneParam = std::pair <Eigen::Vector3f, double>;
+using PlaneParam = std::tuple<Eigen::Vector3f, double, int>;
 using OctreeViz = OctreeViewer;
 #endif //VOXEL_BASED_REGISTRATION_TYPES_CPP

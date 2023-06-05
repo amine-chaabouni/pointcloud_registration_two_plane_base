@@ -48,7 +48,7 @@ generateBasesFromPlaneParams(const std::vector<PlaneParam> &plane_params, Bases 
  * @param target_base_pair
  * @return a tuple containing the LCP, the correspondences and the rotation matrix
  */
-std::tuple<double, std::vector<std::pair<int, int>>, Eigen::Matrix3f>
+std::tuple<double, std::vector<std::pair<int, int>>, Eigen::Matrix4f>
 processBasePair(const std::vector<PlaneParam> &source_planes,
                 const std::vector<PlaneParam> &target_planes,
                 const std::pair<int, int> &source_base_pair,
@@ -141,7 +141,7 @@ void
 estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
                             const std::vector<PlaneParam> &target_planes,
                             const Correspondences &correspondences,
-                            Eigen::MatrixXf &transformation,
+                            Eigen::Matrix4f &transformation,
                             bool with_translation);
 
 #endif //VOXEL_BASED_REGISTRATION_BASE_PROCESSOR_H

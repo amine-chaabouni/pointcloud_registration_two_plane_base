@@ -66,7 +66,7 @@ findRotationBetweenPlanes(const Eigen::MatrixXf &, const Eigen::MatrixXf &, std:
  * @return The transformed point cloud
  */
 PointCloudPtr
-transformTargetPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation);
+transformSourcePointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation);
 
 
 /**

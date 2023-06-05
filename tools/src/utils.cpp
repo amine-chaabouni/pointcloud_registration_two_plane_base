@@ -82,7 +82,7 @@ void findRotationBetweenPlanes(const Eigen::MatrixXf &source_normals,
 }
 
 PointCloudPtr
-transformTargetPointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation) {
+transformSourcePointCloud(const PointCloud::ConstPtr &cloud, const Eigen::MatrixXf &transformation) {
     PointCloudPtr transformed_cloud(new PointCloud);
     transformed_cloud = cloud->makeShared();
     transformed_cloud->points.clear();

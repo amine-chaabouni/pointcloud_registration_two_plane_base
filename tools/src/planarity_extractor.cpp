@@ -58,7 +58,7 @@ int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score) {
     int deleted_voxels = 0;
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
 
-#if DEBUG
+#if HEAVY_DEBUG
     std::vector<double> planarity_scores;
 #endif
 
@@ -70,7 +70,7 @@ int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score) {
         pcl::Indices indices;
         leaf->getPointIndices(indices);
         auto score = computePlanarityScore(octree, indices, centroid);
-#if DEBUG
+#if HEAVY_DEBUG
         planarity_scores.push_back(score);
 #endif
         if (score > max_score) {
@@ -78,7 +78,7 @@ int removeNonPlanarVoxels(Octree::Ptr &octree, double max_score) {
             deleted_voxels++;
         }
     }
-#if DEBUG
+#if HEAVY_DEBUG
     std::cout << "planarity scores " << std::endl;
     for (auto score: planarity_scores) {
         std::cout << score << std::endl;
@@ -176,15 +176,27 @@ extractPlane(Octree::Ptr &octree) {
         int i = 0;
         while (i < params.size() && new_plane) {
             auto param = params[i];
-            if (param.first.isApprox(normal, 0.01) && std::abs(param.second - distance) < 0.01) {
+            auto param_normal = std::get<0>(param);
+            auto param_distance = std::get<1>(param);
+            if (param_normal.isApprox(normal, 0.05) && std::abs(param_distance - distance) < 0.1) {
                 // Plane already exists
                 new_plane = false;
+                std::get<2>(params[i]) += 1;
             }
+#if HEAVY_DEBUG
+            else{
+                std::cout << i << "normal approx 0.01 " << param_normal.isApprox(normal, 0.01) << std::endl;
+                std::cout << i << "normal approx 0.02 " << param_normal.isApprox(normal, 0.02) << std::endl;
+                std::cout << i << "normal approx 0.05 " << param_normal.isApprox(normal, 0.05) << std::endl;
+                std::cout << i << "normal approx 0.1 " << param_normal.isApprox(normal, 0.1) << std::endl;
+                std::cout << i << "distance " << std::abs(param_distance - distance) << std::endl;
+            }
+#endif
             i++;
         }
 
         if (new_plane) {
-            params.emplace_back(normal, distance);
+            params.emplace_back(normal, distance, 1);
             indice_vec.push_back(refined_indices);
         }
     }

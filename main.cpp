@@ -39,6 +39,9 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
     // Generate planes
     auto planes = extractPlane(octree_ptr);
     auto plane_params = planes.first;
+    for(int i = 0; i < plane_params.size(); i++) {
+        std::cout << i << " nb collinear = " << std::get<2>(plane_params[i]) << std::endl;
+    }
 
 #if SHOW_ALL_PLANES
     visualizePlanesOnCloud(cloud, planes.second);
@@ -52,7 +55,7 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
     visualizePlanesOnCloud(cloud, planes.second);
 #endif
 
-#if DEBUG
+#if HEAVY_DEBUG
     checkOctree(octree_ptr);
 #endif
 
@@ -87,7 +90,7 @@ executeRegression(const CompleteCloud source_cloud, const CompleteCloud target_c
     }
 
     // Compute the transformation
-    Eigen::MatrixXf transformation;
+    Eigen::Matrix4f transformation;
     estimateRigidTransformation(source_planes.first, target_planes.first, optimal_correspondence, transformation, true);
 
 

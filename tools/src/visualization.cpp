@@ -124,27 +124,27 @@ void visualizeBases(const PointCloud::ConstPtr &first_cloud, const Planes &first
     // Create a PCLVisualizer object
     pcl::visualization::PCLVisualizer viewer("pcd viewer");
 
-    auto first_indices = first_planes.second;
-    auto second_indices = second_planes.second;
+    std::vector<pcl::Indices> first_indices = first_planes.second;
+    std::vector<pcl::Indices> second_indices = second_planes.second;
     // Add the point cloud to the viewer
     preparePlanesOnCloud(first_cloud, first_indices, viewer, "first_cloud", 0, 255, 0);
     preparePlanesOnCloud(second_cloud, second_indices, viewer, "second_cloud", 120, 120, 0);
 
     // Display normals
     auto point_on_plane = first_cloud->at(first_indices[0][0]);
-    auto normal = first_planes.first[0].first;
+    auto normal = std::get<0>(first_planes.first[0]);
     addNormals(point_on_plane, normal, viewer, "first_normal_first_cloud");
 
     point_on_plane = first_cloud->at(first_indices[1][0]);
-    normal = first_planes.first[1].first;
+    normal = std::get<0>(first_planes.first[1]);
     addNormals(point_on_plane, normal, viewer, "second_normal_first_cloud");
 
     point_on_plane = second_cloud->at(second_indices[0][0]);
-    normal = second_planes.first[0].first;
+    normal = std::get<0>(second_planes.first[0]);
     addNormals(point_on_plane, normal, viewer, "first_normal_second_cloud");
 
     point_on_plane = second_cloud->at(second_indices[1][0]);
-    normal = second_planes.first[1].first;
+    normal = std::get<0>(second_planes.first[1]);
     addNormals(point_on_plane, normal, viewer, "second_normal_second_cloud");
 
     // Display the point cloud
@@ -181,7 +181,7 @@ void visualizeFinalResults(const CompleteCloud &source_cloud, const CompleteClou
     auto second_planes = std::get<1>(target_cloud);
     auto second_bases = std::get<2>(target_cloud);
 
-    PointCloudPtr transformed_cloud = transformTargetPointCloud(first_octree_ptr->getInputCloud(), transformation);
+    PointCloudPtr transformed_cloud = transformSourcePointCloud(first_octree_ptr->getInputCloud(), transformation);
     visualizeTwoPointClouds(second_octree_ptr->getInputCloud(), transformed_cloud);
 
     // Visualize Correspondances
