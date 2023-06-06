@@ -178,7 +178,7 @@ extractPlane(Octree::Ptr &octree) {
             auto param = params[i];
             auto param_normal = std::get<0>(param);
             auto param_distance = std::get<1>(param);
-            if (param_normal.isApprox(normal, 0.05) && std::abs(param_distance - distance) < 0.1) {
+            if (param_normal.isApprox(normal, 0.1) && std::abs(param_distance - distance) < 0.15) {
                 // Plane already exists
                 new_plane = false;
                 std::get<2>(params[i]) += 1;
