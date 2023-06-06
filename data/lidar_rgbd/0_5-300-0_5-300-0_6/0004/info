@@ -1,0 +1,10 @@
+Regression computed in : 0.03507 seconds
+Regression succeeded
+optimal_correspondence: 0 and 2
+optimal_correspondence: 2 and 0
+optimal_correspondence: 4 and 1
+Transformation: 
+ 0.720499 -0.693456         0  0.505962
+ 0.693456  0.720499         0   -1.3983
+        0         0         1 0.0198789
+        0         0         0         1

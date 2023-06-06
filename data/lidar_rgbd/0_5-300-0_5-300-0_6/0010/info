@@ -1,0 +1,13 @@
+Regression computed in : 0.070856 seconds
+Regression succeeded
+optimal_correspondence: 0 and 2
+optimal_correspondence: 1 and 0
+optimal_correspondence: 2 and 3
+Transformation: 
+ 0.819916  0.572483         0  0.840862
+-0.572483  0.819916         0   1.09587
+        0         0         1 0.0219471
+        0         0         0         1
+
+parameters:
+same plane: param_normal.isApprox(normal, 0.05) && std::abs(param_distance - distancec) < 0.1)
