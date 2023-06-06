@@ -116,30 +116,7 @@ identifyPlaneCorrespondences(
             // pair source_id, target_id
             plane_correspondence.emplace_back(i, source_correspondence.first);
         }
-        else{
-            look_for_second.emplace_back(i);
-        }
     }
-
-//    for(int i = 0; i < target_correspondences.size(); i++){
-//        auto target_correspondence = target_correspondences[i];
-//        if(target_correspondence.first == -1){
-//            continue;
-//        }
-//        if(std::find(look_for_second.begin(), look_for_second.end(), target_correspondence.first) == look_for_second.end()) {
-//            continue;
-//        }
-//        auto source_correspondence = source_correspondences[target_correspondence.first];
-//        if(source_correspondence.first == -1){
-//            continue;
-//        }
-//        if(target_correspondence.second < 0.05){
-//            // The target plane is not matched to the source plane but it's collinear
-//            // with it, so we can add it to the correspondences
-//            plane_correspondence.emplace_back(target_correspondence.first, i);
-//        }
-//    }
-
 
 
     return plane_correspondence;
@@ -176,7 +153,10 @@ estimateTranslationParameters(const std::vector<PlaneParam> &source_planes,
 std::pair<std::vector<std::pair<int, double>>, std::vector<std::pair<int, double>>>
 computeNormalDistances(const std::vector<PlaneParam> &source_planes,
                        const std::vector<PlaneParam> &target_planes,
-                       const Eigen::Matrix3f &rotation) {
+                       const Eigen::Matrix3f &rotation,
+                       const std::pair<int, int> &source_base_pair,
+                       const std::pair<int, int> &target_base_pair) {
+
     // For each plane in the source, find the closest plane in the target
     std::vector<std::pair<int, double>> source_correspondence(source_planes.size(), std::make_pair(-1, -1));
     // For each plane in the target, find the closest plane in the source
@@ -207,6 +187,30 @@ computeNormalDistances(const std::vector<PlaneParam> &source_planes,
             }
         }
     }
+
+
+    if (source_base_pair.first != -1 && target_base_pair.first != -1) {
+        // encourage correspondences of bases
+        if (source_correspondence[source_base_pair.first].first == target_base_pair.first) {
+            source_correspondence[source_base_pair.first].second = 0;
+            target_correspondence[target_base_pair.first] = std::make_pair(source_base_pair.first, 0);
+        } else if (target_correspondence[target_base_pair.first].first == source_base_pair.first) {
+            target_correspondence[target_base_pair.first].second = 0;
+            source_correspondence[source_base_pair.first] = std::make_pair(target_base_pair.first, 0);
+        }
+    }
+    if(source_base_pair.second != -1 && target_base_pair.second != -1){
+        // encourage correspondences of bases
+        if (source_correspondence[source_base_pair.second].first == target_base_pair.second) {
+            source_correspondence[source_base_pair.second].second = 0;
+            target_correspondence[target_base_pair.second] = std::make_pair(source_base_pair.second, 0);
+        } else if (target_correspondence[target_base_pair.second].first == source_base_pair.second) {
+            target_correspondence[target_base_pair.second].second = 0;
+            source_correspondence[source_base_pair.second] = std::make_pair(target_base_pair.second, 0);
+        }
+    }
+
+
     return std::make_pair(source_correspondence, target_correspondence);
 }
 
@@ -252,26 +256,11 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
 
 
     // Rotate source cloud and create correspondences of planes
-    auto correspondences = computeNormalDistances(source_planes, target_planes, *rotation);
-
-    // force correspondences of bases
-    if(correspondences.first[source_base_pair.first].first == target_base_pair.first){
-        correspondences.first[source_base_pair.first].second = 0;
-        correspondences.second[target_base_pair.first] = std::make_pair(source_base_pair.first, 0);
-    }
-    else if(correspondences.second[target_base_pair.first].first == source_base_pair.first){
-        correspondences.second[target_base_pair.first].second = 0;
-        correspondences.first[source_base_pair.first] = std::make_pair(target_base_pair.first, 0);
-    }
-
-    if(correspondences.first[source_base_pair.second].first == target_base_pair.second){
-        correspondences.first[source_base_pair.second].second = 0;
-        correspondences.second[target_base_pair.second] = std::make_pair(source_base_pair.second, 0);
-    }
-    else if(correspondences.second[target_base_pair.second].first == source_base_pair.second){
-        correspondences.second[target_base_pair.second].second = 0;
-        correspondences.first[source_base_pair.second] = std::make_pair(target_base_pair.second, 0);
-    }
+    auto correspondences = computeNormalDistances(source_planes,
+                                                  target_planes,
+                                                  *rotation,
+                                                  source_base_pair,
+                                                  target_base_pair);
 
     // Identify initial plane correspondences
     auto plane_correspondence = identifyPlaneCorrespondences(correspondences);
@@ -307,17 +296,22 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
         );
     }
 
-//    correspondences = computeNormalDistances(source_planes, target_planes, transformation.block<3,3>(0,0));
-//    plane_correspondence = identifyPlaneCorrespondences(correspondences);
+    correspondences = computeNormalDistances(source_planes,
+                                             target_planes,
+                                             transformation.block<3, 3>(0, 0),
+                                             source_base_pair,
+                                             target_base_pair);
+    plane_correspondence = identifyPlaneCorrespondences(correspondences);
 
-//#if DEBUG
-//    std::cout << "Compute new correspondences for base (" << source_base_pair.first << ", " << source_base_pair.second
-//              << ") and (" << target_base_pair.first << ", " << target_base_pair.second << ")" << std::endl;
-//    std::cout << "There are : " << plane_correspondence.size() << " correspondences" << std::endl;
-//    for (auto &corr: plane_correspondence) {
-//        std::cout << "source : " << corr.first << " -- target : " << corr.second << std::endl;
-//    }
-//#endif
+#if DEBUG
+    std::cout << "Compute new correspondences for base (" << source_base_pair.first << ", "
+              << source_base_pair.second
+              << ") and (" << target_base_pair.first << ", " << target_base_pair.second << ")" << std::endl;
+    std::cout << "There are : " << plane_correspondence.size() << " correspondences" << std::endl;
+    for (auto &corr: plane_correspondence) {
+        std::cout << "source : " << corr.first << " -- target : " << corr.second << std::endl;
+    }
+#endif
 
     auto LCP = 0;
     auto threshold = 0.5;

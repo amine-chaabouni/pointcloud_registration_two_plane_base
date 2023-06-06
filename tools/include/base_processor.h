@@ -105,15 +105,22 @@ estimateTranslationParameters(const std::vector<PlaneParam> &source_planes,
  * 3. For each plane in the source cloud, find the most collinear plane in the target cloud
  * 4. For each plane in the target cloud, find the most collinear plane in the source cloud
  *
+ * Additionnaly, if a bases is given, then the process encourages the correspondences to be between the planes in the bases as follows:
+ * If one of the bases is corresponding to the other, then change the correspondence to be between these two bases
+ *
  * @param source_planes
  * @param target_planes
  * @param rotation used to rotated the source planes to the target planes in order for the planes to be collinear
+ * @param source_base_pair
+ * @param target_base_pair
  * @return
  */
 std::pair<std::vector<std::pair<int, double>>, std::vector<std::pair<int, double>>>
 computeNormalDistances(const std::vector<PlaneParam> &source_planes,
                        const std::vector<PlaneParam> &target_planes,
-                       const Eigen::Matrix3f &rotation);
+                       const Eigen::Matrix3f &rotation,
+                       const std::pair<int, int> &source_base_pair = std::make_pair(-1, -1),
+                       const std::pair<int, int> &target_base_pair = std::make_pair(-1, -1));
 
 
 /**
