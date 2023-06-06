@@ -96,3 +96,8 @@ Example:
 ```
 ./main ../data/data/0010/lidar_0_0* ../data/data/0010/rgbd_0_1* 0.5 300 0.5 300 0.6
 ```
+
+## Tests
+
+Results from the paper on ROSSO dataset can be reproduced (with the right choice of parameters):
+

@@ -10,4 +10,4 @@ Transformation:
         0         0         0         1
 
 parameters:
-same plane: param_normal.isApprox(normal, 0.05) && std::abs(param_distance - distancec) < 0.1)
+same plane: param_normal.isApprox(normal, 0.05) && std::abs(param_distance - distance) < 0.1)
