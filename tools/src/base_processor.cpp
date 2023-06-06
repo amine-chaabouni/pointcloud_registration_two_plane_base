@@ -375,11 +375,11 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
     auto second_bases = std::get<2>(second_cloud);
 
 //    first_bases.clear();
-//    first_bases.emplace_back(0, 2, M_PI / 2);
+//    first_bases.emplace_back(0, 4, M_PI / 2);
 //
 //
 //    second_bases.clear();
-//    second_bases.emplace_back(2, 3, M_PI / 2);
+//    second_bases.emplace_back(0, 1, M_PI / 2);
 
     int nb_base_pairs = 0;
 
@@ -518,8 +518,8 @@ estimateRigidTransformation(const std::vector<PlaneParam> &source_planes,
     Eigen::MatrixXf source_normals(3, correspondences.size());
     Eigen::MatrixXf target_normals(3, correspondences.size());
     for (int i = 0; i < correspondences.size(); i++) {
-        source_normals.col(i) = source_planes[correspondences[i].first].first;
-        target_normals.col(i) = target_planes[correspondences[i].second].first;
+        source_normals.col(i) = std::get<0>(source_planes[correspondences[i].first]);
+        target_normals.col(i) = std::get<0>(target_planes[correspondences[i].second]);
     }
 #endif
 
