@@ -1,23 +1,46 @@
-# pointcloud_registration_two_plane_base
+# Pairwise Coarse Registration of Point Clouds by Traversing Voxel-Based 2-Plane Bases
 
 Unofficial implementation of paper ["Pairwaise coarse registration of point clouds by traversing voxel-based 2 plane
 bases"](https://www.tandfonline.com/doi/epdf/10.1080/01431161.2022.2130725?needAccess=true&role=button)
 
+## Paper details
+
+The paper aims at estimating a rough transformation between two point clouds. The method is based on the following
+steps:
+
+1. Voxel-based planes are extracted from the entire point cloud wiht 3D cubic grids decomposed by the octree-based
+   voxelization. A plane is defined by a normal vector and a distance (positive).
+2. Bases are generated from the planes. A base is composed of two planes with a dihadral angle $`\alpha \in [10°, 80°]`$
+3. Bases from the source cloud are compared to those from the target cloud to find a corresponding match (equal angles)
+    1. For two possibly corresponding bases, a rotation is estimated to align the two bases (collinear normal vectors)
+    2. Using the rotated cloud, find correspondences between the source planes and the target planes. Planes are
+       correspondent if:
+        1. For a plane `sPi` (source plane i), find the most collinear plane `tPj` (target plane j)
+        2. For a plane `tPj`, find the most collinear plane `sPh`
+        3. if `h == i` then `sPi` and `tPj` are correspondent.
+    3. Using this list of correspondences, find the transformation between the two clouds to minimize the distance
+       between the planes.
+    4. Compute the optimal correspondence. Additionally, to `3.ii.`, Planes are correspondent if the distance between
+       them is smaller than a threshold $`d_{max}`$
+
 ## Additional Changes to the paper
 
-1. The same plane is only generated once to avoid redundant computation.
-2. When computing the LCP score, the number of planes generated are taken into account. If a plane is generated twice,
+1. The angle between the planes to generate bases is augmented to 110°. This way, we can generate a base as a plane from
+   the floor and a plane from the wall.
+2. The same plane is only generated once to avoid redundant computation.
+3. When computing the LCP score, the number of planes generated are taken into account. If a plane is generated twice,
    the LCP takes that into account.
-3. When assigning correspondences between planes, the correspondence between the bases being processed is encouraged. If
+4. When assigning correspondences between planes, the correspondence between the bases being processed is encouraged. If
    one of the bases is corresponded to the other, but not the other way around, we force the correspondence to be
    mutual.
-4. This implementation aims at registering point clouds taken by sensors correctly oriented on the Z axis. As such, we
+5. This implementation aims at registering point clouds taken by sensors correctly oriented on the Z axis. As such, we
    force the rotation to be only on the Z axis.
 
 ### Justification of the changes
 
 An ablation study has been conducted on a particular example (`data/data/0010`) to justify the changes. The results can
-be found in `data/lidar_lidar/0_5-300-0_5-300-0_6/0010/ablation_study` and `data/lidar_rgbd/0_5-300-0_5-300-0_6/0010/ablation_study`. The ablation study shows that the changes made to the
+be found in `data/lidar_lidar/0_5-300-0_5-300-0_6/0010/ablation_study`
+and `data/lidar_rgbd/0_5-300-0_5-300-0_6/0010/ablation_study`. The ablation study shows that the changes made to the
 paper improve the registration results.
 
 ## Repository structure
