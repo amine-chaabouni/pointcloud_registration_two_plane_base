@@ -99,5 +99,14 @@ Example:
 
 ## Tests
 
-Results from the paper on ROSSO dataset can be reproduced (with the right choice of parameters):
+Results from the paper on [RESSO dataset](https://3d.bk.tudelft.nl/liangliang/publications/2019/plade/resso.html) can be reproduced (with the right choice of parameters):
+
+| Figure | Result of Registration                                             |
+|--------|--------------------------------------------------------------------|
+| 6i     | ![Figure 6i](data/RESSO_dataset_results/figure_6i.png "Figure 6i") |
+| 6j     | ![Figure 6i](data/RESSO_dataset_results/figure_6j.png "Figure 6j") |
+| 7d     | ![Figure 6i](data/RESSO_dataset_results/figure_7d.png "Figure 7d") |
+| 7e     | ![Figure 6i](data/RESSO_dataset_results/figure_7e.png "Figure 7e") |
+
+
 
