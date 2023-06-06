@@ -35,6 +35,9 @@ steps:
    mutual.
 5. This implementation aims at registering point clouds taken by sensors correctly oriented on the Z axis. As such, we
    force the rotation to be only on the Z axis.
+6. A loop over the parameters (voxel_size, minimum number of points per voxel, planarity score) is implemented
+   in `main.cpp` and the result that aligns the most planes in the two clouds is selected. (This point has not shown any
+   improvement in the tried results).
 
 ### Justification of the changes
 
@@ -80,6 +83,10 @@ paper improve the registration results.
 
 ## Usage
 
+1. Clone the repository
+2. Create a build directory and compile the code `cmake .. && make`
+3. Run the code with the following arguments:
+
 ```
 ./main <path_source_cloud> <path_target_cloud> <voxel_size_source_cloud> <minimum_nb_points_per_voxel_source> <voxel_size_target_cloud> <minimum_nb_points_per_voxel_target> <planarity_score>
 ```
@@ -87,5 +94,5 @@ paper improve the registration results.
 Example:
 
 ```
-./main data/data/0010/lidar_0_0* data/data/0010/rgbd_0_1* 0.5 300 0.5 300 0.6
+./main ../data/data/0010/lidar_0_0* ../data/data/0010/rgbd_0_1* 0.5 300 0.5 300 0.6
 ```

@@ -39,7 +39,7 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
     // Generate planes
     auto planes = extractPlane(octree_ptr);
     auto plane_params = planes.first;
-    for(int i = 0; i < plane_params.size(); i++) {
+    for (int i = 0; i < plane_params.size(); i++) {
         std::cout << i << " nb collinear = " << std::get<2>(plane_params[i]) << std::endl;
     }
 
@@ -103,11 +103,11 @@ int main(int argc, char **argv) {
 #if CLION_DEBUG
     std::string source_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
     std::string target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/multiple_robots/lidar_0_0.pcd";
-    double source_resolution = 0.5;
-    double target_resolution = 0.5;
-    int source_min_points_per_voxel = 1000;
-    int target_min_points_per_voxel = 1000;
-    double planarity_score = 0.6;
+    double source_resolution_max = 0.5;
+    double target_resolution_max = 0.5;
+    int source_min_points_per_voxel_max = 1000;
+    int target_min_points_per_voxel_max = 1000;
+    double planarity_score_max = 0.6;
 #else
     if (argc != 8) {
         std::cerr
@@ -118,53 +118,121 @@ int main(int argc, char **argv) {
     std::string source_cloud_path(argv[1]);
     std::string target_cloud_path(argv[2]);
 
-    double source_resolution = std::atof(argv[3]);
-    int source_min_points_per_voxel = std::atof(argv[4]);
+    double source_resolution_max = std::atof(argv[3]);
+    int source_min_points_per_voxel_max = std::atof(argv[4]);
 
-    double target_resolution = std::atof(argv[5]);
-    int target_min_points_per_voxel = std::atoi(argv[6]);
+    double target_resolution_max = std::atof(argv[5]);
+    int target_min_points_per_voxel_max = std::atoi(argv[6]);
 
-    double planarity_score = std::atof(argv[7]);
+    double planarity_score_max = std::atof(argv[7]);
 #endif
 
 //    source_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/lidar_0_0.pcd";
 
-    clock_t begin_time = clock();
-    auto source_cloud = preparePointCloud(source_cloud_path, source_resolution, source_min_points_per_voxel,
-                                          planarity_score);
-    std::cout << "Source cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+    std::vector<std::tuple<double, int, double, int, double>> possible_parameters{
+            std::make_tuple(source_resolution_max,
+                            source_min_points_per_voxel_max,
+                            target_resolution_max,
+                            target_min_points_per_voxel_max,
+                            planarity_score_max),
+            std::make_tuple(0.3,
+                            100,
+                            0.3,
+                            100,
+                            0.6),
+            std::make_tuple(0.1,
+                            30,
+                            0.1,
+                            30,
+                            0.6),
+            std::make_tuple(0.4,
+                            50,
+                            0.4,
+                            50,
+                            0.6),
+            std::make_tuple(0.5,
+                            300,
+                            0.5,
+                            300,
+                            0.8),
+    };
+
+    CompleteCloud final_source_cloud, final_target_cloud;
+    Correspondences final_optimal_correspondence;
+    Eigen::Matrix4f final_transformation;
+    double resolution = source_resolution_max;
+
+    ulong max_planes = 0;
+
+    for (auto parameters: possible_parameters) {
+        double source_resolution = std::get<0>(parameters);
+        int source_min_points_per_voxel = std::get<1>(parameters);
+        double target_resolution = std::get<2>(parameters);
+        int target_min_points_per_voxel = std::get<3>(parameters);
+        double planarity_score = std::get<4>(parameters);
+
+
+        clock_t begin_time = clock();
+        auto source_cloud = preparePointCloud(source_cloud_path, source_resolution, source_min_points_per_voxel,
+                                              planarity_score);
+        std::cout << "Source cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
+                  << std::endl;
 
 
 //    target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
-    begin_time = clock();
-    auto target_cloud = preparePointCloud(target_cloud_path, target_resolution, target_min_points_per_voxel,
-                                          planarity_score);
-    std::cout << "Target cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+        begin_time = clock();
+        auto target_cloud = preparePointCloud(target_cloud_path, target_resolution, target_min_points_per_voxel,
+                                              planarity_score);
+        std::cout << "Target cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
+                  << std::endl;
 
-    begin_time = clock();
+        begin_time = clock();
 
-    auto regression_result = executeRegression(source_cloud, target_cloud);
+        auto regression_result = executeRegression(source_cloud, target_cloud);
 
-    std::cout << "Regression computed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+        std::cout << "Regression computed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
+                  << std::endl;
 
-    auto success = std::get<0>(regression_result);
-    if (!success) {
-        std::cout << "Regression failed" << std::endl;
-        return -1;
-    }
-    std::cout << "Regression succeeded" << std::endl;
+        auto success = std::get<0>(regression_result);
+        if (!success) {
+            std::cout << "Regression failed" << std::endl;
+            continue;
+        }
+        std::cout << "Regression succeeded" << std::endl;
 
 
-    auto optimal_correspondence = std::get<1>(regression_result);
-    for (auto corr: optimal_correspondence) {
-        std::cout << "optimal_correspondence: " << corr.first << " and " << corr.second << std::endl;
-    }
+        auto optimal_correspondence = std::get<1>(regression_result);
+        for (auto corr: optimal_correspondence) {
+            std::cout << "optimal_correspondence: " << corr.first << " and " << corr.second << std::endl;
+        }
 
-    auto transformation = std::get<2>(regression_result);
-    std::cout << "Transformation: " << std::endl << transformation << std::endl;
+        auto transformation = std::get<2>(regression_result);
+        std::cout << "Transformation: " << std::endl << transformation << std::endl;
 
 #if VISUALIZE_FINAL_RESULTS
-    visualizeFinalResults(source_cloud, target_cloud, optimal_correspondence, transformation, source_resolution);
+        visualizeFinalResults(source_cloud,
+                              target_cloud,
+                              optimal_correspondence,
+                              transformation,
+                              source_resolution);
+#endif
+
+        if (optimal_correspondence.size() > max_planes) {
+            max_planes = optimal_correspondence.size();
+            final_source_cloud = source_cloud;
+            final_target_cloud = target_cloud;
+            final_optimal_correspondence = optimal_correspondence;
+            final_transformation = transformation;
+            resolution = source_resolution;
+        }
+    }
+
+#if VISUALIZE_FINAL_RESULTS
+    visualizeFinalResults(final_source_cloud,
+                          final_target_cloud,
+                          final_optimal_correspondence,
+                          final_transformation,
+                          resolution);
 #endif
 
     return 0;

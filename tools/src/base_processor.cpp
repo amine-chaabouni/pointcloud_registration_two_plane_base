@@ -9,6 +9,18 @@
 bool
 correspondencesValid(const std::vector<PlaneParam> &source_planes, const std::vector<PlaneParam> &target_planes,
                      const Correspondences &correspondences) {
+    return computeNumberOfNonColinearPlanes(source_planes, target_planes, correspondences) >= 3;
+}
+
+bool
+correspondencesValid(int number_of_non_collinear_planes) {
+    return number_of_non_collinear_planes >= 3;
+}
+
+int
+computeNumberOfNonColinearPlanes(const std::vector<PlaneParam> &source_planes,
+                                 const std::vector<PlaneParam> &target_planes,
+                                 const Correspondences &correspondences) {
     /*
      * Correspondences are valid if there are at least three non-collinear planes
      * An angle of PI counts as collinear
@@ -64,7 +76,9 @@ correspondencesValid(const std::vector<PlaneParam> &source_planes, const std::ve
             target_possible_three_base_planes.emplace_back(correspondence.second);
         }
     }
-    return (source_possible_three_base_planes.size() >= 3 && target_possible_three_base_planes.size() >= 3);
+    int number_of_non_collinear_planes = std::min(source_possible_three_base_planes.size(),
+                                                  target_possible_three_base_planes.size());
+    return number_of_non_collinear_planes;
 }
 
 void
@@ -199,7 +213,7 @@ computeNormalDistances(const std::vector<PlaneParam> &source_planes,
             source_correspondence[source_base_pair.first] = std::make_pair(target_base_pair.first, 0);
         }
     }
-    if(source_base_pair.second != -1 && target_base_pair.second != -1){
+    if (source_base_pair.second != -1 && target_base_pair.second != -1) {
         // encourage correspondences of bases
         if (source_correspondence[source_base_pair.second].first == target_base_pair.second) {
             source_correspondence[source_base_pair.second].second = 0;

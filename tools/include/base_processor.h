@@ -24,6 +24,28 @@ correspondencesValid(const std::vector<PlaneParam> &source_planes, const std::ve
 
 
 /**
+ * @brief Check if the correspondences are valid
+ * @param number_of_non_collinear_planes
+ * @return true if the correspondences are valid, false otherwise
+ */
+bool
+correspondencesValid(int number_of_non_collinear_planes);
+
+
+/**
+ * @brief Compute the number of non-collinear planes
+ * @param source_planes
+ * @param target_planes
+ * @param correspondences
+ * @return
+ */
+int
+computeNumberOfNonColinearPlanes(const std::vector<PlaneParam> &source_planes,
+                                 const std::vector<PlaneParam> &target_planes,
+                                 const Correspondences &correspondences);
+
+
+/**
  * @brief Generate bases from plane parameters
  * @details Generate bases of two planes with an angle between min_angle and max_angle
  * @param plane_params
