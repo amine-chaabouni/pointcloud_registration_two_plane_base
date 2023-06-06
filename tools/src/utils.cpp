@@ -8,7 +8,11 @@ PointCloudPtr loadPcd(const std::string &pcd_file_path) {
     // Create a point cloud object
     PointCloudPtr cloud(new PointCloud);
     // Load the pcd file
-    pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_file_path, *cloud);
+    if (pcd_file_path.substr(pcd_file_path.find_last_of(".") + 1) == "pcd") {
+        pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_file_path, *cloud);
+    } else {
+        pcl::io::loadPLYFile(pcd_file_path, *cloud);
+    }
 #if DEBUG
     std::cout << "Point Cloud Loaded" << cloud->size() << std::endl;
 #endif
