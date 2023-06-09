@@ -342,6 +342,7 @@ processBasePair(const std::vector<PlaneParam> &source_planes,
 
         if (std::abs(source_distance - target_distance) < threshold) {
             LCP += std::get<2>(source_planes[plane_corr.first]) * std::get<2>(target_planes[plane_corr.second]);
+//            LCP += std::min(std::get<2>(source_planes[plane_corr.first]), std::get<2>(target_planes[plane_corr.second]));
             final_correspondence.emplace_back(plane_corr);
         }
     }
@@ -389,11 +390,11 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
     auto second_bases = std::get<2>(second_cloud);
 
 //    first_bases.clear();
-//    first_bases.emplace_back(0, 4, M_PI / 2);
+//    first_bases.emplace_back(4, 5, M_PI / 2);
 //
 //
 //    second_bases.clear();
-//    second_bases.emplace_back(0, 1, M_PI / 2);
+//    second_bases.emplace_back(0, 2, M_PI / 2);
 
     int nb_base_pairs = 0;
 
