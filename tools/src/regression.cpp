@@ -27,9 +27,12 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
     // Generate planes
     auto planes = extractPlane(octree_ptr);
     auto plane_params = planes.first;
+
+#if HEAVY_DEBUG
     for (int i = 0; i < plane_params.size(); i++) {
         std::cout << i << " nb collinear = " << std::get<2>(plane_params[i]) << std::endl;
     }
+#endif
 
 #if SHOW_ALL_PLANES
     visualizePlanesOnCloud(cloud, planes.second);
@@ -57,7 +60,8 @@ executeRegression(const CompleteCloud& source_cloud, const CompleteCloud& target
     auto source_octree_ptr = std::get<0>(source_cloud);
     auto source_planes = std::get<1>(source_cloud);
     auto source_bases = std::get<2>(source_cloud);
-#if MINIMAL_OUTPUT
+
+#if DEBUG
     std::cout << "Source cloud has " << source_planes.first.size() << " planes" << std::endl;
     std::cout << "Source cloud has " << source_bases.size() << " bases" << std::endl;
 #endif
@@ -65,7 +69,8 @@ executeRegression(const CompleteCloud& source_cloud, const CompleteCloud& target
     auto target_octree_ptr = std::get<0>(target_cloud);
     auto target_planes = std::get<1>(target_cloud);
     auto target_bases = std::get<2>(target_cloud);
-#if MINIMAL_OUTPUT
+
+#if DEBUG
     std::cout << "Target cloud has " << target_planes.first.size() << " planes" << std::endl;
     std::cout << "Target cloud has " << target_bases.size() << " bases" << std::endl;
 #endif

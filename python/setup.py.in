@@ -1,0 +1,12 @@
+from setuptools import setup
+
+setup(
+    name='tpbr_python',
+    version='1.0.0',
+    author='Amine Chaabouni',
+    author_email='aminecha3@gmail.com',
+    description='Python binding for Two Plane Based Registration',
+    package_dir={'': '${CMAKE_CURRENT_BINARY_DIR}'},
+    packages=['tpbr_python'],
+    package_data={'': ['*.so']}
+)
