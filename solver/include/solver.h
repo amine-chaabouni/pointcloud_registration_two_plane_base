@@ -32,6 +32,10 @@ public:
     virtual std::tuple<bool, Correspondences, Eigen::Matrix4f>
     solve();
 
+    void visualizeSourceCloudWithPlanes();
+
+    void visualizeTargetCloudWithPlanes();
+
     [[nodiscard]] int getSourceNbPlanes() const;
 
     [[nodiscard]] int getTargetNbPlanes() const;

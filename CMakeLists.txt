@@ -29,6 +29,7 @@ set(CMAKE_CXX_FLAGS "-g")
 # Add subdirectories
 add_subdirectory(custom_lib)
 add_subdirectory(tools)
+add_subdirectory(solver)
 add_subdirectory(python)
 #add_subdirectory(third_lib)
 
@@ -60,6 +61,7 @@ target_link_libraries(main
             ${PCL_LIBRARIES}
             pcl_octree_local
             local_tools
+            tpbr_solver
         )
 
 target_include_directories(main PUBLIC ${CMAKE_CURRENT_LIST_DIR})

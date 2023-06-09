@@ -501,6 +501,7 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
             } // end if -- base pair found
         } // end for base_2
     } // end for base_1
+#if DEBUG
     std::cout << "nb_base_pairs: " << nb_base_pairs << std::endl;
     std::cout << "LCP: " << LCP << std::endl;
     std::cout << "best transformation = " << std::endl << best_transformation << std::endl;
@@ -508,6 +509,7 @@ findOptimalCorrespondences(const CompleteCloud &first_cloud,
               << std::endl;
     std::cout << "best corresponding base pair = " << std::endl << best_corresponding_base_pair.first << " and "
               << best_corresponding_base_pair.second << std::endl;
+#endif
     return plane_correspondence;
 }
 

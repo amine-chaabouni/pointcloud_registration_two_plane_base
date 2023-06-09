@@ -10,7 +10,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
 
-#include "../../tools/include/solver.h"
+#include "../../solver/include/solver.h"
 
 
 namespace py = pybind11;
@@ -20,13 +20,6 @@ namespace py = pybind11;
  */
 PYBIND11_MODULE(tpbr_python, m) {
     m.doc() = "Python binding for Two Plane Based Registration";
-
-    py::class_<PointT> PointT(m, "PointT");
-
-    PointT.def(py::init<>())
-            .def_readwrite("x", &PointT::x)
-            .def_readwrite("y", &PointT::y)
-            .def_readwrite("z", &PointT::z);
 
     // Python bound for teaser::RobustRegistraionSolver
     py::class_<Solver> Solver(m, "TwoPlaneBasedRegistrationSolver");
@@ -40,7 +33,9 @@ PYBIND11_MODULE(tpbr_python, m) {
             .def("get_source_nb_bases", &Solver::getSourceNbBases)
             .def("get_target_nb_bases", &Solver::getTargetNbBases)
             .def("get_source_cloud", &Solver::getSourceCloud)
-            .def("get_target_cloud", &Solver::getTargetCloud);
+            .def("get_target_cloud", &Solver::getTargetCloud)
+            .def("visualize_source_cloud_with_planes", &Solver::visualizeSourceCloudWithPlanes)
+            .def("visualize_target_cloud_with_planes", &Solver::visualizeTargetCloudWithPlanes);
 
     // Python bound for Solver::Params
     py::class_<Solver::Params>(Solver, "Params")

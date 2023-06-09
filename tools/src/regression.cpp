@@ -34,9 +34,6 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
     }
 #endif
 
-#if SHOW_ALL_PLANES
-    visualizePlanesOnCloud(cloud, planes.second);
-#endif
     // Generate bases
     Bases bases;
     generateBasesFromPlaneParams(plane_params, &bases, min_angle, max_angle);

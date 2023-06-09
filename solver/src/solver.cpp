@@ -18,6 +18,14 @@ Solver::solve() {
     return executeRegression(source_cloud_, target_cloud_);
 }
 
+void Solver::visualizeSourceCloudWithPlanes(){
+    visualizePlanesOnCloud(std::get<0>(source_cloud_)->getInputCloud(), std::get<1>(source_cloud_).second);
+}
+
+void Solver::visualizeTargetCloudWithPlanes(){
+    visualizePlanesOnCloud(std::get<0>(target_cloud_)->getInputCloud(), std::get<1>(target_cloud_).second);
+}
+
 int Solver::getSourceNbPlanes() const {
     return std::get<1>(source_cloud_).second.size();
 }

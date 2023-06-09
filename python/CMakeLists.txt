@@ -7,7 +7,7 @@ pybind11_add_module(tpbr_python tpbr_python/tpbr_python.cc)
 
 message(STATUS "Python Interpreter Version: ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
 
-target_link_libraries(tpbr_python PUBLIC local_tools)
+target_link_libraries(tpbr_python PUBLIC tpbr_solver)
 
 # fix for clang
 # see: https://github.com/pybind/pybind11/issues/1818
