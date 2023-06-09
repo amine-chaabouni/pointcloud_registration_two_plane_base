@@ -28,7 +28,7 @@ preparePointCloud(const std::string &cloud_path, double resolution, int min_poin
     auto planes = extractPlane(octree_ptr);
     auto plane_params = planes.first;
 
-#if HEAVY_DEBUG
+#if MINIMAL_OUTPUT
     for (int i = 0; i < plane_params.size(); i++) {
         std::cout << i << " nb collinear = " << std::get<2>(plane_params[i]) << std::endl;
     }

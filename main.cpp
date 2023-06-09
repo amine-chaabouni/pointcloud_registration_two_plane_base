@@ -67,6 +67,8 @@ int main(int argc, char **argv) {
     std::cout << "Source cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
               << std::endl;
 
+    visualizePlanesOnCloud(std::get<0>(source_cloud)->getInputCloud(), std::get<1>(source_cloud).second);
+
 
 //    target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
     begin_time = clock();
@@ -74,6 +76,7 @@ int main(int argc, char **argv) {
                                           planarity_score, min_angle, max_angle);
     std::cout << "Target cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
               << std::endl;
+    visualizePlanesOnCloud(std::get<0>(target_cloud)->getInputCloud(), std::get<1>(target_cloud).second);
 
     begin_time = clock();
 

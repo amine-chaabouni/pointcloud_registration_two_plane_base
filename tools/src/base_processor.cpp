@@ -49,6 +49,7 @@ computeNumberOfNonColinearPlanes(const std::vector<PlaneParam> &source_planes,
 
         for (auto plane_idx: source_possible_three_base_planes) {
             auto second_source_normal = std::get<0>(source_planes[plane_idx]);
+            //TODO: change to check if the plane is a linear combination of the previous ones
             auto angle = angleBetweenVectors(first_source_normal, second_source_normal);
             if (angle > angle_threshold && angle < (M_PI - angle_threshold)) {
                 possible_part_of_base++;
@@ -65,6 +66,7 @@ computeNumberOfNonColinearPlanes(const std::vector<PlaneParam> &source_planes,
         possible_part_of_base = 0;
         for (auto plane_idx: target_possible_three_base_planes) {
             auto second_target_normal = std::get<0>(target_planes[plane_idx]);
+            //TODO: change to check if the plane is a linear combination of the previous ones
             auto angle = angleBetweenVectors(first_target_normal, second_target_normal);
             if (angle > angle_threshold && angle < (M_PI - angle_threshold)) {
                 possible_part_of_base++;
