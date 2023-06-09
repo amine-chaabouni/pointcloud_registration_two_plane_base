@@ -5,7 +5,8 @@
 #include "regression.h"
 
 CompleteCloud
-preparePointCloud(const std::string &cloud_path, double resolution, int min_point_per_voxel, double planarity_score) {
+preparePointCloud(const std::string &cloud_path, double resolution, int min_point_per_voxel, double planarity_score,
+                  double min_angle, double max_angle) {
     auto cloud = loadPcd(cloud_path);
     // Convert the point cloud to an octree
     Octree octree = toOctree(cloud, resolution);
