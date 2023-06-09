@@ -7,6 +7,9 @@
 
 #define CLION_DEBUG 0
 
+double min_angle = 10.0 * M_PI / 180.0;
+double max_angle = 110.0 * M_PI / 180.0;
+
 int main(int argc, char **argv) {
 
 #if CLION_DEBUG
@@ -60,7 +63,7 @@ int main(int argc, char **argv) {
 
     clock_t begin_time = clock();
     auto source_cloud = preparePointCloud(source_cloud_path, source_resolution, source_min_points_per_voxel,
-                                          planarity_score);
+                                          planarity_score, min_angle, max_angle);
     std::cout << "Source cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
               << std::endl;
 
@@ -68,7 +71,7 @@ int main(int argc, char **argv) {
 //    target_cloud_path = "/home/amine/nn_i2p/RegTR/data/own_test/gazebo/rgbd_0_1.pcd";
     begin_time = clock();
     auto target_cloud = preparePointCloud(target_cloud_path, target_resolution, target_min_points_per_voxel,
-                                          planarity_score);
+                                          planarity_score, min_angle, max_angle);
     std::cout << "Target cloud processed in : " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds"
               << std::endl;
 
