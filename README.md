@@ -88,13 +88,15 @@ paper improve the registration results.
 3. Run the code with the following arguments:
 
 ```
-./main <path_source_cloud> <path_target_cloud> <voxel_size_source_cloud> <minimum_nb_points_per_voxel_source> <voxel_size_target_cloud> <minimum_nb_points_per_voxel_target> <planarity_score>
+./main <voxel_size_source_cloud> <minimum_nb_points_per_voxel_source> <voxel_size_target_cloud> <minimum_nb_points_per_voxel_target> <planarity_score> <path_source_cloud> <path_target_cloud> 
+./main <voxel_size_source_cloud> <minimum_nb_points_per_voxel_source> <voxel_size_target_cloud> <minimum_nb_points_per_voxel_target> <planarity_score> <cloud_directory> 
 ```
 
 Example:
 
 ```
-./main ../data/data/0010/lidar_0_0* ../data/data/0010/rgbd_0_1* 0.5 300 0.5 300 0.6
+./main 0.5 300 0.5 300 0.6  ../data/data/0010/lidar_0_0* ../data/data/0010/rgbd_0_1* 
+./main 0.5 300 0.5 300 0.6  ../data/data/0010
 ```
 
 ## Tests
